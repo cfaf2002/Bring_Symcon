@@ -71,6 +71,15 @@
             "type": "Button",
             "caption": "Jetzt aktualisieren",
             "onClick": "echo EINK_Update($id) ? 'Liste aktualisiert.' : 'Aktualisierung fehlgeschlagen.';"
+        },
+        {
+            "type": "Button",
+            "caption": "Artikelkatalog neu laden",
+            "onClick": "echo EINK_ReloadCatalog($id) ? 'Katalog aktualisiert.' : 'Katalog konnte nicht geladen werden.';"
+        },
+        {
+            "type": "Label",
+            "caption": "Der Bring!-Artikelkatalog (Namen und Vorschläge) wird automatisch einmal täglich abgeglichen."
         }
     ],
     "status": [

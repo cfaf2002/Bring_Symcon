@@ -37,10 +37,13 @@ class BringListe extends IPSModuleStrict
 
         $this->RegisterAttributeString('Artikel', '{"purchase":[],"recently":[]}');
         $this->RegisterAttributeString('Sprache', '');
+        $this->RegisterAttributeInteger('KatalogStand', 0);
+        $this->RegisterAttributeInteger('KatalogVersuch', 0);
         $this->RegisterAttributeString('Uebersetzung', '{}');
         $this->RegisterAttributeInteger('ParentID', 0);
 
         $this->RegisterTimer('Aktualisieren', 0, 'EINK_Update($_IPS[\'TARGET\']);');
+        $this->RegisterTimer('Katalog', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "Katalog", true);');
         $this->RegisterTimer('Benachrichtigen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "AutoBenachrichtigung", true);');
     }
 
@@ -61,6 +64,7 @@ class BringListe extends IPSModuleStrict
 
         $this->SetTimerInterval('Aktualisieren', 0);
         $this->SetTimerInterval('Benachrichtigen', 0);
+        $this->SetTimerInterval('Katalog', 0);
 
         $this->VariablenAnlegen();
         $this->SetVisualizationType($this->ReadPropertyBoolean('Kachel') ? 1 : 0);
@@ -79,7 +83,6 @@ class BringListe extends IPSModuleStrict
             return;
         }
 
-        $this->WriteAttributeString('Sprache', '');
         $this->Start();
     }
 
@@ -142,6 +145,12 @@ class BringListe extends IPSModuleStrict
             case 'Kachel':
                 $this->KachelAktion((string) $Value);
                 break;
+            case 'Katalog':
+                if ($this->HasActiveParent() && $this->KatalogPruefen()) {
+                    $this->VariablenSetzen($this->ArtikelHolen());
+                    $this->KachelSenden(true);
+                }
+                break;
             default:
                 throw new Exception('Ungültiger Ident: ' . $Ident);
         }
@@ -199,6 +208,8 @@ class BringListe extends IPSModuleStrict
             return false;
         }
 
+        $KatalogNeu = $this->KatalogPruefen();
+
         $Result = $this->Senden('GET', 'bringlists/' . $Uuid);
         if (!$Result['Success'] || !is_array($Result['Data'])) {
             $this->SetStatus($Result['Code'] == 404 ? EINK::STATUS_KEINE_LISTE : EINK::STATUS_KEINE_VERBINDUNG);
@@ -213,7 +224,7 @@ class BringListe extends IPSModuleStrict
         $this->WriteAttributeString('Artikel', json_encode($Artikel));
 
         $this->VariablenSetzen($Artikel);
-        $this->KachelSenden();
+        $this->KachelSenden($KatalogNeu);
 
         if ($this->GetStatus() != IS_ACTIVE) {
             $this->SetStatus(IS_ACTIVE);
@@ -318,8 +329,9 @@ class BringListe extends IPSModuleStrict
             $this->SetStatus(EINK::STATUS_KEINE_VERBINDUNG);
             return;
         }
-        $this->SpracheLaden();
+        $this->KatalogPruefen(true);
         $this->Update();
+        $this->SetTimerInterval('Katalog', 3600 * 1000);
         $Intervall = $this->ReadPropertyInteger('Intervall');
         if ($Intervall > 0) {
             $this->SetTimerInterval('Aktualisieren', max(30, $Intervall) * 1000);
@@ -510,11 +522,15 @@ class BringListe extends IPSModuleStrict
 
     // ---------- Sprache / Katalog ----------
 
-    private function SpracheLaden(): void
+    /**
+     * Lädt Listensprache und Bring!-Artikelkatalog neu.
+     * Schlägt der Abruf fehl, bleibt der bisherige Katalog erhalten.
+     * Rückgabe: true = geändert, false = unverändert, null = Abruf fehlgeschlagen
+     */
+    private function KatalogLaden(): ?bool
     {
-        if ($this->ReadAttributeString('Sprache') !== '') {
-            return;
-        }
+        $this->WriteAttributeInteger('KatalogVersuch', time());
+
         $Sprache = 'de-DE';
         $Result = $this->Senden('GET', 'bringusersettings/{uuid}');
         if ($Result['Success'] && is_array($Result['Data'])) {
@@ -540,10 +556,36 @@ class BringListe extends IPSModuleStrict
                 }
             }
         }
-        $this->SendDebug('Sprache', $Sprache . ' (' . count($Uebersetzung) . ' Katalog-Artikel)', 0);
-        $this->WriteAttributeString('Uebersetzung', json_encode($Uebersetzung));
-        $this->UebersetzungCache = null;
+        if (count($Uebersetzung) == 0) {
+            $this->SendDebug('Katalog', 'Abruf fehlgeschlagen (' . $Katalog['Error'] . '), bisheriger Katalog bleibt', 0);
+            return null;
+        }
+
+        $Alt = $this->ReadAttributeString('Uebersetzung');
+        $Neu = json_encode($Uebersetzung);
         $this->WriteAttributeString('Sprache', $Sprache);
+        $this->WriteAttributeInteger('KatalogStand', time());
+        $this->SendDebug('Katalog', $Sprache . ': ' . count($Uebersetzung) . ' Artikel' . ($Alt === $Neu ? ' (unverändert)' : ' (aktualisiert)'), 0);
+        if ($Alt !== $Neu) {
+            $this->WriteAttributeString('Uebersetzung', $Neu);
+            $this->UebersetzungCache = null;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Katalog täglich abgleichen; fehlt er, alle 15 Minuten erneut versuchen.
+     */
+    private function KatalogPruefen(bool $Erzwingen = false): bool
+    {
+        $Leer = in_array($this->ReadAttributeString('Uebersetzung'), ['', '{}', '[]'], true);
+        $Faellig = (time() - $this->ReadAttributeInteger('KatalogStand')) > 86400;
+        $Wiederholen = (time() - $this->ReadAttributeInteger('KatalogVersuch')) > 900;
+        if ($Erzwingen || ($Leer && $Wiederholen) || ($Faellig && $Wiederholen)) {
+            return $this->KatalogLaden() === true;
+        }
+        return false;
     }
 
     private function Anzeige(string $Key): string
@@ -721,10 +763,30 @@ class BringListe extends IPSModuleStrict
         }
     }
 
-    private function KachelSenden(): void
+    private function KachelSenden(bool $MitKatalog = false): void
     {
         if ($this->ReadPropertyBoolean('Kachel')) {
-            $this->UpdateVisualizationValue(json_encode($this->KachelDaten()));
+            $Daten = $this->KachelDaten();
+            if ($MitKatalog) {
+                $Daten['katalog'] = $this->KachelKatalog();
+            }
+            $this->UpdateVisualizationValue(json_encode($Daten));
         }
+    }
+
+    /**
+     * Lädt den Bring!-Artikelkatalog sofort neu (sonst automatisch einmal täglich).
+     */
+    public function ReloadCatalog(): bool
+    {
+        $Ergebnis = $this->KatalogLaden();
+        if ($Ergebnis === null) {
+            return false;
+        }
+        if ($Ergebnis) {
+            $this->VariablenSetzen($this->ArtikelHolen());
+            $this->KachelSenden(true);
+        }
+        return true;
     }
 }

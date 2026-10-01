@@ -32,7 +32,7 @@ Eine Bring!-Einkaufsliste als Instanz in IP-Symcon.
 - Eingabefeld oben: Beim Tippen erscheinen passende Artikel mit Symbol (Bring!-Katalog und eigene Artikel). Antippen oder mit Pfeiltasten + Enter hinzufügen. Eine Beschreibung nach einem Komma wird übernommen, z. B. `Milch, 2 Liter`
 - Unten: Benachrichtigungen an alle anderen Mitglieder der Liste (der Absender selbst bekommt keine Nachricht). Unter den Artikeln erscheint, ob das Senden geklappt hat
 
-Die Artikel-Symbole werden direkt im Browser von Bring! geladen. Eigene Artikel ohne Symbol erhalten den Anfangsbuchstaben.
+Der Bring!-Artikelkatalog (Anzeigenamen und Vorschläge) wird beim Start und danach automatisch einmal täglich abgeglichen. Die Artikel-Symbole werden direkt im Browser von Bring! geladen. Eigene Artikel ohne Symbol erhalten den Anfangsbuchstaben.
 
 ## PHP-Befehle
 
@@ -44,6 +44,7 @@ bool  EINK_CompleteItem(int $InstanzID, string $Name);               // abhaken
 bool  EINK_RemoveItem(int $InstanzID, string $Name);                 // ganz entfernen
 bool  EINK_SendNotification(int $InstanzID, string $Typ);            // GOING_SHOPPING, SHOPPING_DONE, CHANGED_LIST
 bool  EINK_SendUrgentItem(int $InstanzID, string $Name);
+bool  EINK_ReloadCatalog(int $InstanzID);                            // Artikelkatalog sofort neu laden
 
 // Beispiel
 EINK_AddItem(12345, 'Milch', '2 Liter');

@@ -42,6 +42,10 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 10)**
+- Bring!-Artikelkatalog wird automatisch einmal täglich abgeglichen (unabhängig vom Aktualisierungsintervall); fehlt er, alle 15 Minuten neuer Versuch, bei Ausfall bleibt der bisherige erhalten
+- Button „Artikelkatalog neu laden“ und Befehl EINK_ReloadCatalog
+
 **Version 1.0 (Build 9)**
 - Kachel: Vorschläge mit Symbol beim Tippen (Bring!-Katalog, zuletzt verwendete und eigene Artikel), Auswahl per Maus oder Pfeiltasten/Enter
 - Benachrichtigungs-Knöpfe melden jetzt, ob das Senden geklappt hat (bei Fehlern mit Grund, zusätzlich im Meldungsfenster)
