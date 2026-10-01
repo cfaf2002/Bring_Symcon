@@ -42,6 +42,10 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 7)**
+- Kachel überarbeitet: kein doppelter Titel mehr, einheitliche Schrift, ruhigere Artikel-Kacheln, passt sich hellem und dunklem Design an
+- Artikel bearbeiten auch per Rechtsklick
+
 **Version 1.0 (Build 6)**
 - Hersteller in der Instanzliste: Bring! Labs AG
 

@@ -7,7 +7,6 @@ Eine Bring!-Einkaufsliste als Instanz in IP-Symcon.
 | Einstellung | Beschreibung |
 | :---------- | :----------- |
 | Liste | Auswahl der Liste aus dem Konto (wird vom Konfigurator gesetzt) |
-| Anzeigename in der Kachel | Überschrift der Kachel (leer = Instanzname) |
 | Liste aktualisieren alle | Abfrageintervall in Sekunden (Standard 300, 0 = aus, mindestens 30) |
 | „Liste geändert“ senden | Schickt nach Änderungen aus Symcon automatisch eine Benachrichtigung – sofort oder verzögert, damit mehrere Änderungen nur eine Nachricht auslösen |
 | Eigene Kachel verwenden | Zeigt die Liste als Kachel mit Artikel-Symbolen |
@@ -29,7 +28,7 @@ Eine Bring!-Einkaufsliste als Instanz in IP-Symcon.
 
 - Artikel antippen → abhaken (wandert nach „Zuletzt verwendet“)
 - „Zuletzt verwendet“ antippen → wieder auf die Liste
-- `⋯` → Beschreibung ändern oder Artikel entfernen
+- `⋮` oder Rechtsklick → Beschreibung ändern oder Artikel entfernen
 - Eingabefeld oben: `Artikel, Beschreibung` + Enter
 - Unten: Benachrichtigungen an alle Mitglieder
 
