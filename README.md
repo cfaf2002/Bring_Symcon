@@ -42,6 +42,9 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 6)**
+- Hersteller in der Instanzliste: Bring! Labs AG
+
 **Version 1.0 (Build 5)**
 - Umbenannt: Bring Konto, Bring Konfigurator, Bring Liste (Präfix EINK und GUIDs unverändert)
 
