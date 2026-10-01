@@ -42,6 +42,9 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 8)**
+- Kachel: Texte, Eingabefeld und Knöpfe wieder gut lesbar (feste Farben für dunkles/helles Design), größere Schrift
+
 **Version 1.0 (Build 7)**
 - Kachel überarbeitet: kein doppelter Titel mehr, einheitliche Schrift, ruhigere Artikel-Kacheln, passt sich hellem und dunklem Design an
 - Artikel bearbeiten auch per Rechtsklick

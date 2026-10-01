@@ -2,39 +2,49 @@
     .eink {
         --eink-akzent: #e5574f;
         --eink-akzent-text: #ffffff;
-        --eink-flaeche: color-mix(in srgb, currentColor 8%, transparent);
-        --eink-flaeche-hover: color-mix(in srgb, currentColor 14%, transparent);
-        --eink-rand: color-mix(in srgb, currentColor 16%, transparent);
-        --eink-leise: color-mix(in srgb, currentColor 55%, transparent);
+        --eink-text: #f2f2f2;
+        --eink-leise: rgba(255, 255, 255, 0.62);
+        --eink-flaeche: rgba(255, 255, 255, 0.08);
+        --eink-flaeche-hover: rgba(255, 255, 255, 0.13);
+        --eink-rand: rgba(255, 255, 255, 0.18);
+        color: var(--eink-text);
     }
+    .eink.hell {
+        --eink-text: #1d1d1f;
+        --eink-leise: rgba(0, 0, 0, 0.55);
+        --eink-flaeche: rgba(0, 0, 0, 0.05);
+        --eink-flaeche-hover: rgba(0, 0, 0, 0.09);
+        --eink-rand: rgba(0, 0, 0, 0.15);
+    }
+    .eink.hell .artikel.zuletzt img { filter: invert(1); opacity: 0.75; }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; background: transparent; color: inherit; }
     body, button, input { font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
-    .eink { display: flex; flex-direction: column; gap: 12px; padding: 44px 4px 6px; height: 100%; overflow-y: auto; font-size: 14px; }
-    .knopf { border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; border-radius: 10px; padding: 0 12px; height: 36px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    .eink { display: flex; flex-direction: column; gap: 12px; padding: 44px 4px 6px; height: 100%; overflow-y: auto; font-size: 15px; }
+    .knopf { border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; border-radius: 10px; padding: 0 12px; height: 38px; font-size: 14px; cursor: pointer; white-space: nowrap; }
     .knopf:hover { background: var(--eink-flaeche-hover); }
     .knopf:active { transform: scale(0.97); }
-    .knopf.haupt { background: var(--eink-akzent); color: var(--eink-akzent-text); border-color: transparent; font-size: 20px; width: 40px; padding: 0; }
-    .knopf.rund { width: 36px; padding: 0; font-size: 16px; }
+    .knopf.haupt { background: var(--eink-akzent); color: var(--eink-akzent-text); border-color: transparent; font-size: 22px; width: 42px; padding: 0; }
+    .knopf.rund { width: 38px; padding: 0; font-size: 18px; }
     .eingabe { display: flex; gap: 8px; }
-    .eingabe input { flex: 1; min-width: 0; height: 36px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; font-size: 14px; outline: none; }
+    .eingabe input { flex: 1; min-width: 0; height: 38px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; font-size: 15px; outline: none; }
     .eingabe input:focus { border-color: var(--eink-akzent); }
     .eingabe input::placeholder { color: var(--eink-leise); }
-    .abschnitt { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--eink-leise); }
-    .abschnitt .zahl { background: var(--eink-akzent); color: var(--eink-akzent-text); border-radius: 10px; padding: 1px 8px; font-size: 11px; letter-spacing: 0; }
-    .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 8px; }
-    .artikel { position: relative; height: 92px; border-radius: 12px; padding: 8px 6px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; cursor: pointer; user-select: none; -webkit-user-select: none; overflow: hidden; transition: transform 0.1s, background 0.15s; }
+    .abschnitt { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--eink-leise); }
+    .abschnitt .zahl { background: var(--eink-akzent); color: var(--eink-akzent-text); border-radius: 10px; padding: 1px 8px; font-size: 12px; letter-spacing: 0; }
+    .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 8px; }
+    .artikel { position: relative; height: 96px; border-radius: 12px; padding: 8px 6px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; cursor: pointer; user-select: none; -webkit-user-select: none; overflow: hidden; transition: transform 0.1s, background 0.15s; }
     .artikel.kaufen { background: var(--eink-akzent); color: var(--eink-akzent-text); }
     .artikel.zuletzt { background: var(--eink-flaeche); }
     .artikel.zuletzt:hover { background: var(--eink-flaeche-hover); }
     .artikel:active { transform: scale(0.95); }
-    .artikel img, .zeichen { width: 36px; height: 36px; flex: none; }
+    .artikel img, .zeichen { width: 38px; height: 38px; flex: none; }
     .artikel img { object-fit: contain; }
     .artikel.kaufen img { filter: brightness(0) invert(1); }
     .artikel.zuletzt img { opacity: 0.8; }
     .zeichen { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; border: 2px solid currentColor; }
-    .name { font-size: 12px; font-weight: 600; line-height: 1.15; max-height: 2.3em; overflow: hidden; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
-    .spec { font-size: 11px; opacity: 0.8; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: -2px; }
+    .name { font-size: 13px; font-weight: 600; line-height: 1.15; max-height: 2.3em; overflow: hidden; overflow-wrap: break-word; hyphens: auto; -webkit-hyphens: auto; }
+    .spec { font-size: 12px; opacity: 0.85; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; margin-top: -2px; }
     .mehr { position: absolute; top: 2px; right: 4px; border: none; background: none; color: inherit; font-size: 16px; line-height: 1; cursor: pointer; padding: 2px 4px; opacity: 0.45; }
     .mehr:hover { opacity: 1; }
     .leer { padding: 20px 8px; text-align: center; color: var(--eink-leise); border: 1px dashed var(--eink-rand); border-radius: 12px; }
@@ -88,6 +98,25 @@
 
 <script>
     var eink = { titel: '', bilder: '', purchase: [], recently: [] };
+
+    // Hell/Dunkel anhand des Hintergrunds der Symcon-Kachel erkennen
+    (function () {
+        function hell(farbe) {
+            var m = (farbe || '').match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?/);
+            if (!m || (m[4] !== undefined && parseFloat(m[4]) < 0.3)) return null;
+            return (0.299 * m[1] + 0.587 * m[2] + 0.114 * m[3]) > 150;
+        }
+        var ergebnis = null;
+        try {
+            var el = window.frameElement;
+            while (el && ergebnis === null) {
+                ergebnis = hell(window.parent.getComputedStyle(el).backgroundColor);
+                el = el.parentElement;
+            }
+        } catch (e) { }
+        if (ergebnis === null) ergebnis = hell(getComputedStyle(document.body).backgroundColor);
+        if (ergebnis) document.querySelector('.eink').classList.add('hell');
+    })();
     var einkAktuell = null;
 
     function handleMessage(data) {
