@@ -1,4 +1,4 @@
-# Einkaufsliste (Bring!) für IP-Symcon
+# Bring für IP-Symcon
 
 Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufügen, abhaken und entfernen, Benachrichtigungen an alle Mitglieder senden – mit eigener Kachel für die Visualisierung.
 
@@ -8,9 +8,9 @@ Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufüg
 
 | Modul | Typ | Aufgabe |
 | :---- | :-- | :------ |
-| [Einkaufsliste Konto](Konto/README.md) | I/O | Anmeldung am Bring!-Konto, Token-Verwaltung |
-| [Einkaufsliste Konfigurator](Konfigurator/README.md) | Konfigurator | Legt die Listen des Kontos als Instanzen an |
-| [Einkaufsliste](Liste/README.md) | Gerät | Eine Liste mit Variablen, Kachel und Benachrichtigungen |
+| [Bring Konto](Konto/README.md) | I/O | Anmeldung am Bring!-Konto, Token-Verwaltung |
+| [Bring Konfigurator](Konfigurator/README.md) | Konfigurator | Legt die Listen des Kontos als Instanzen an |
+| [Bring Liste](Liste/README.md) | Gerät | Eine Liste mit Variablen, Kachel und Benachrichtigungen |
 
 ## Voraussetzungen
 
@@ -20,27 +20,33 @@ Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufüg
 ## Installation
 
 1. Im Objektbaum unter *Kern Instanzen → Modules* die URL `https://github.com/cfaf2002/Bring_Symcon` hinzufügen.
-2. Instanz **Einkaufsliste Konfigurator** anlegen – die Konto-Instanz wird automatisch mit erstellt.
+2. Instanz **Bring Konfigurator** anlegen – die Konto-Instanz wird automatisch mit erstellt.
 3. In der Konto-Instanz den Nutzungshinweis bestätigen, E-Mail und Passwort eintragen und übernehmen.
 4. Im Konfigurator die gewünschten Listen erstellen.
 
 ## Datenfluss
 
 ```
-Einkaufsliste (Liste)  ─┐
-Einkaufsliste (Liste)  ─┼──►  Einkaufsliste Konto  ──►  Bring!-Cloud
-Konfigurator           ─┘
+Bring Liste         ─┐
+Bring Liste         ─┼──►  Bring Konto  ──►  Bring!-Cloud
+Bring Konfigurator  ─┘
 ```
 
 ## GUIDs
 
 | Modul | Präfix | GUID |
 | :---- | :----: | :--: |
-| Einkaufsliste Konto | EINK | {97F6071D-028A-4BFF-B873-1DC1C67F66E4} |
-| Einkaufsliste Konfigurator | EINK | {ECCAFA95-80A1-44A5-900E-57C483BF0DFF} |
-| Einkaufsliste | EINK | {7EDEB801-A287-42F4-B60E-88DEC71E6305} |
+| Bring Konto | EINK | {97F6071D-028A-4BFF-B873-1DC1C67F66E4} |
+| Bring Konfigurator | EINK | {ECCAFA95-80A1-44A5-900E-57C483BF0DFF} |
+| Bring Liste | EINK | {7EDEB801-A287-42F4-B60E-88DEC71E6305} |
 
 ## Changelog
+
+**Version 1.0 (Build 5)**
+- Umbenannt: Bring Konto, Bring Konfigurator, Bring Liste (Präfix EINK und GUIDs unverändert)
+
+**Version 1.0 (Build 4)**
+- Doppelte Einträge beim Hinzufügen einer Instanz entfernt (Aliase)
 
 **Version 1.0 (Build 3)**
 - Korrektur: Instanzen ließen sich nicht anlegen (GetCompatibleParents statt ConnectParent)

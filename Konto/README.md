@@ -1,4 +1,4 @@
-# Einkaufsliste Konto
+# Bring Konto
 
 Meldet sich am Bring!-Konto an und leitet alle Anfragen der Listen und des Konfigurators an die Bring!-Cloud weiter. Der Zugangs-Token wird automatisch erneuert; läuft er ab oder wird er ungültig, meldet sich die Instanz selbstständig neu an.
 

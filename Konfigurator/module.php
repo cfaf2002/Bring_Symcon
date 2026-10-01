@@ -5,12 +5,12 @@ declare(strict_types=1);
 require_once __DIR__ . '/../libs/EINK.php';
 
 /**
- * Einkaufsliste Konfigurator
+ * Bring Konfigurator
  * Zeigt alle Listen des Bring!-Kontos und legt sie als Instanzen an.
  *
  * Autor: Armin Frohwerk
  */
-class EinkaufslisteKonfigurator extends IPSModuleStrict
+class BringKonfigurator extends IPSModuleStrict
 {
     public function Create(): void
     {
@@ -18,7 +18,7 @@ class EinkaufslisteKonfigurator extends IPSModuleStrict
     }
 
     /**
-     * Übergeordnete Instanz: Einkaufsliste Konto
+     * Übergeordnete Instanz: Bring Konto
      */
     public function GetCompatibleParents(): string
     {

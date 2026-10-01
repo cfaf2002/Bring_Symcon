@@ -5,13 +5,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/../libs/EINK.php';
 
 /**
- * Einkaufsliste
+ * Bring Liste
  * Eine Bring!-Einkaufsliste als Instanz mit Variablen, eigener Kachel
  * und Benachrichtigungen.
  *
  * Autor: Armin Frohwerk
  */
-class Einkaufsliste extends IPSModuleStrict
+class BringListe extends IPSModuleStrict
 {
     private const BENACHRICHTIGUNGEN = [
         1 => EINK::NOTIFY_GOING_SHOPPING,
@@ -44,7 +44,7 @@ class Einkaufsliste extends IPSModuleStrict
     }
 
     /**
-     * Übergeordnete Instanz: Einkaufsliste Konto
+     * Übergeordnete Instanz: Bring Konto
      */
     public function GetCompatibleParents(): string
     {

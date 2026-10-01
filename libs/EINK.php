@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 /**
- * Gemeinsame Konstanten des Moduls "Einkaufsliste".
+ * Gemeinsame Konstanten des Moduls "Bring".
  */
 class EINK
 {

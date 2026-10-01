@@ -5,13 +5,13 @@ declare(strict_types=1);
 require_once __DIR__ . '/../libs/EINK.php';
 
 /**
- * Einkaufsliste Konto
+ * Bring Konto
  * Meldet sich am Bring!-Konto an, verwaltet die Tokens und leitet
  * alle Anfragen der Listen- und Konfigurator-Instanzen an die Cloud weiter.
  *
  * Autor: Armin Frohwerk
  */
-class EinkaufslisteKonto extends IPSModuleStrict
+class BringKonto extends IPSModuleStrict
 {
     public function Create(): void
     {

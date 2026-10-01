@@ -1,10 +1,9 @@
 {
     "id": "{7EDEB801-A287-42F4-B60E-88DEC71E6305}",
-    "name": "Einkaufsliste",
+    "name": "Bring Liste",
     "type": 3,
     "vendor": "Armin Frohwerk",
     "aliases": [
-        "Einkaufsliste",
         "Bring Liste"
     ],
     "parentRequirements": [

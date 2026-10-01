@@ -1,12 +1,12 @@
 {
     "id": "{3A46CBF1-6533-4F75-ADFF-EA24EE75FD2D}",
-    "name": "Einkaufsliste",
+    "name": "Bring",
     "author": "Armin Frohwerk",
     "url": "https://github.com/cfaf2002/Bring_Symcon",
     "compatibility": {
         "version": "8.1"
     },
     "version": "1.0",
-    "build": 3,
-    "date": 1790841155
+    "build": 5,
+    "date": 1790841364
 }

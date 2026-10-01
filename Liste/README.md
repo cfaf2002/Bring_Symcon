@@ -1,4 +1,4 @@
-# Einkaufsliste
+# Bring Liste
 
 Eine Bring!-Einkaufsliste als Instanz in IP-Symcon.
 
