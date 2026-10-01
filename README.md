@@ -42,6 +42,11 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 9)**
+- Kachel: Vorschläge mit Symbol beim Tippen (Bring!-Katalog, zuletzt verwendete und eigene Artikel), Auswahl per Maus oder Pfeiltasten/Enter
+- Benachrichtigungs-Knöpfe melden jetzt, ob das Senden geklappt hat (bei Fehlern mit Grund, zusätzlich im Meldungsfenster)
+- Artikelnamen werden immer über den Bring!-Katalog angezeigt (z. B. „Müsli“ statt „Müesli“)
+
 **Version 1.0 (Build 8)**
 - Kachel: Texte, Eingabefeld und Knöpfe wieder gut lesbar (feste Farben für dunkles/helles Design), größere Schrift
 

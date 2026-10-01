@@ -20,6 +20,7 @@ class BringListe extends IPSModuleStrict
     ];
 
     private ?array $UebersetzungCache = null;
+    private string $LetzterFehler = '';
 
     public function Create(): void
     {
@@ -173,7 +174,9 @@ class BringListe extends IPSModuleStrict
     public function GetVisualizationTile(): string
     {
         $HTML = file_get_contents(__DIR__ . '/module.html');
-        $Daten = json_encode($this->KachelDaten(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+        $Daten = $this->KachelDaten();
+        $Daten['katalog'] = $this->KachelKatalog();
+        $Daten = json_encode($Daten, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         return $HTML . '<script>handleMessage(' . json_encode($Daten, JSON_HEX_TAG) . ');</script>';
     }
 
@@ -378,9 +381,14 @@ class BringListe extends IPSModuleStrict
             'senderPublicUserUuid' => '{publicUuid}'
         ], 'json');
         if (!$Result['Success']) {
-            trigger_error('Benachrichtigung konnte nicht gesendet werden (' . $Result['Error'] . ')', E_USER_WARNING);
+            $this->LetzterFehler = $Result['Error'] !== '' ? $Result['Error'] : 'unbekannter Fehler';
+            if (is_array($Result['Data']) && isset($Result['Data']['message'])) {
+                $this->LetzterFehler .= ' – ' . $Result['Data']['message'];
+            }
+            $this->LogMessage('Bring!-Benachrichtigung ' . $Typ . ' fehlgeschlagen: ' . $this->LetzterFehler, KL_WARNING);
             return false;
         }
+        $this->SendDebug('Benachrichtigung', $Typ . ' gesendet (HTTP ' . $Result['Code'] . ')', 0);
         return true;
     }
 
@@ -419,7 +427,22 @@ class BringListe extends IPSModuleStrict
                 $this->Aendern(['purchase' => '', 'recently' => '', 'specification' => '', 'remove' => $Key]);
                 break;
             case 'benachrichtigen':
-                $this->SendNotification((string) ($A['typ'] ?? ''));
+                $Texte = [
+                    EINK::NOTIFY_GOING_SHOPPING => 'Gehe einkaufen',
+                    EINK::NOTIFY_SHOPPING_DONE  => 'Einkauf erledigt',
+                    EINK::NOTIFY_CHANGED_LIST   => 'Liste geändert'
+                ];
+                $Typ = (string) ($A['typ'] ?? '');
+                $Ok = $this->SendNotification($Typ);
+                $this->KachelMeldung($Ok
+                    ? '„' . ($Texte[$Typ] ?? $Typ) . '“ an die anderen Mitglieder der Liste gesendet.'
+                    : 'Benachrichtigung fehlgeschlagen: ' . $this->LetzterFehler);
+                break;
+            case 'artikel':
+                $Key = (string) ($A['key'] ?? '');
+                if ($Key !== '') {
+                    $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => trim((string) ($A['spec'] ?? '')), 'remove' => '']);
+                }
                 break;
             case 'aktualisieren':
                 $this->Update();
@@ -507,18 +530,17 @@ class BringListe extends IPSModuleStrict
             }
         }
 
+        // Artikelkatalog (Artikel-ID => Anzeigename), auch für Vorschläge in der Kachel
         $Uebersetzung = [];
-        if ($Sprache !== 'de-DE') {
-            $Katalog = $this->Senden('GET', sprintf(EINK::ARTICLES_URL, $Sprache));
-            if ($Katalog['Success'] && is_array($Katalog['Data'])) {
-                foreach ($Katalog['Data'] as $Key => $Wert) {
-                    if (is_string($Wert) && $Wert !== '' && $Wert !== $Key) {
-                        $Uebersetzung[$Key] = $Wert;
-                    }
+        $Katalog = $this->Senden('GET', sprintf(EINK::ARTICLES_URL, $Sprache));
+        if ($Katalog['Success'] && is_array($Katalog['Data'])) {
+            foreach ($Katalog['Data'] as $Key => $Wert) {
+                if (is_string($Wert) && $Wert !== '') {
+                    $Uebersetzung[(string) $Key] = $Wert;
                 }
             }
         }
-        $this->SendDebug('Sprache', $Sprache . ' (' . count($Uebersetzung) . ' Übersetzungen)', 0);
+        $this->SendDebug('Sprache', $Sprache . ' (' . count($Uebersetzung) . ' Katalog-Artikel)', 0);
         $this->WriteAttributeString('Uebersetzung', json_encode($Uebersetzung));
         $this->UebersetzungCache = null;
         $this->WriteAttributeString('Sprache', $Sprache);
@@ -657,6 +679,46 @@ class BringListe extends IPSModuleStrict
             'icon'  => self::IconName($A['key']),
             'buchstabe' => self::IconName(mb_substr($A['key'], 0, 1))
         ];
+    }
+
+    /**
+     * Vorschlagsliste für die Kachel: Katalog + eigene Artikel. Je Eintrag [ID, Anzeigename, Symbol, Buchstabe]
+     */
+    private function KachelKatalog(): array
+    {
+        $Liste = [];
+        $Gesehen = [];
+        $Uebersetzung = json_decode($this->ReadAttributeString('Uebersetzung'), true) ?: [];
+        foreach ($Uebersetzung as $Key => $Wert) {
+            $Key = (string) $Key;
+            if (strpos($Key, '&') !== false || strpos($Wert, '&') !== false) {
+                continue; // Kategorien
+            }
+            $Name = mb_strtolower($Wert);
+            if (isset($Gesehen[$Name])) {
+                continue;
+            }
+            $Gesehen[$Name] = true;
+            $Liste[] = [$Key, $Wert, self::IconName($Key), self::IconName(mb_substr($Key, 0, 1))];
+        }
+        $Artikel = $this->ArtikelHolen();
+        foreach (array_merge($Artikel['purchase'], $Artikel['recently']) as $A) {
+            $Wert = $this->Anzeige($A['key']);
+            $Name = mb_strtolower($Wert);
+            if (isset($Gesehen[$Name])) {
+                continue;
+            }
+            $Gesehen[$Name] = true;
+            $Liste[] = [$A['key'], $Wert, self::IconName($A['key']), self::IconName(mb_substr($A['key'], 0, 1))];
+        }
+        return $Liste;
+    }
+
+    private function KachelMeldung(string $Text): void
+    {
+        if ($this->ReadPropertyBoolean('Kachel')) {
+            $this->UpdateVisualizationValue(json_encode(['meldung' => $Text]));
+        }
     }
 
     private function KachelSenden(): void

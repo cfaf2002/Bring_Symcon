@@ -17,6 +17,20 @@
         --eink-rand: rgba(0, 0, 0, 0.15);
     }
     .eink.hell .artikel.zuletzt img { filter: invert(1); opacity: 0.75; }
+    .eink { --eink-menue: #2a2b30; }
+    .eink.hell { --eink-menue: #ffffff; }
+    .suche { position: relative; flex: 1; min-width: 0; display: flex; }
+    .suche input { width: 100%; }
+    .vorschlaege { position: absolute; left: 0; right: 0; top: 42px; z-index: 20; background: var(--eink-menue); border: 1px solid var(--eink-rand); border-radius: 12px; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); padding: 4px; max-height: 330px; overflow-y: auto; display: none; }
+    .vorschlaege.offen { display: block; }
+    .vorschlag { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; cursor: pointer; }
+    .vorschlag:hover, .vorschlag.aktiv { background: var(--eink-flaeche-hover); }
+    .vorschlag .symbol { width: 34px; height: 34px; flex: none; border-radius: 8px; background: var(--eink-akzent); color: #fff; display: flex; align-items: center; justify-content: center; }
+    .vorschlag .symbol img { width: 26px; height: 26px; object-fit: contain; filter: brightness(0) invert(1); }
+    .vorschlag .symbol .zeichen { width: 26px; height: 26px; font-size: 14px; border-width: 1.5px; }
+    .vorschlag .text { flex: 1; min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .vorschlag .text b { color: var(--eink-akzent); }
+    .vorschlag .hinweis { font-size: 12px; color: var(--eink-leise); white-space: nowrap; }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; background: transparent; color: inherit; }
     body, button, input { font-family: "Segoe UI", Roboto, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; }
@@ -62,8 +76,11 @@
 
 <div class="eink" lang="de">
     <form class="eingabe" onsubmit="hinzufuegen(event)">
-        <input id="neu" type="text" placeholder="Artikel, Beschreibung" autocomplete="off" list="vorschlaege">
-        <datalist id="vorschlaege"></datalist>
+        <div class="suche">
+            <input id="neu" type="text" placeholder="Artikel suchen oder hinzufügen (Artikel, Beschreibung)" autocomplete="off"
+                oninput="suchen()" onkeydown="tasten(event)" onfocus="suchen()" onblur="setTimeout(schliessenVorschlaege, 200)">
+            <div class="vorschlaege" id="vorschlaege"></div>
+        </div>
         <button class="knopf haupt" type="submit" title="Hinzufügen">+</button>
         <button class="knopf rund" type="button" title="Aktualisieren" onclick="senden({aktion:'aktualisieren'})">⟳</button>
     </form>
@@ -120,11 +137,17 @@
     var einkAktuell = null;
 
     function handleMessage(data) {
+        var d;
         try {
-            eink = (typeof data === 'string') ? JSON.parse(data) : data;
+            d = (typeof data === 'string') ? JSON.parse(data) : data;
         } catch (e) {
             return;
         }
+        if (d.meldung) {
+            meldung(d.meldung);
+            return;
+        }
+        for (var k in d) eink[k] = d[k];
         zeichnen();
     }
 
@@ -136,7 +159,26 @@
         var m = document.getElementById('meldung');
         m.textContent = text;
         clearTimeout(meldung.t);
-        meldung.t = setTimeout(function () { m.textContent = ''; }, 3000);
+        meldung.t = setTimeout(function () { m.textContent = ''; }, 6000);
+    }
+
+    function symbol(icon, buchstabe, name) {
+        var img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = eink.bilder + icon + '.png';
+        img.onerror = function () {
+            if (!img.dataset.ersatz && buchstabe) {
+                img.dataset.ersatz = '1';
+                img.src = eink.bilder + buchstabe + '.png';
+            } else {
+                var z = document.createElement('div');
+                z.className = 'zeichen';
+                z.textContent = (name || '?').charAt(0).toUpperCase();
+                img.replaceWith(z);
+            }
+        };
+        return img;
     }
 
     function kachel(artikel, bereich) {
@@ -144,22 +186,7 @@
         el.className = 'artikel ' + (bereich === 'purchase' ? 'kaufen' : 'zuletzt');
         el.title = bereich === 'purchase' ? 'Antippen zum Abhaken' : 'Antippen zum Hinzufügen';
 
-        var img = document.createElement('img');
-        img.alt = '';
-        img.loading = 'lazy';
-        img.src = eink.bilder + artikel.icon + '.png';
-        img.onerror = function () {
-            if (!img.dataset.ersatz && artikel.buchstabe) {
-                img.dataset.ersatz = '1';
-                img.src = eink.bilder + artikel.buchstabe + '.png';
-            } else {
-                var z = document.createElement('div');
-                z.className = 'zeichen';
-                z.textContent = (artikel.name || '?').charAt(0).toUpperCase();
-                img.replaceWith(z);
-            }
-        };
-        el.appendChild(img);
+        el.appendChild(symbol(artikel.icon, artikel.buchstabe, artikel.name));
 
         var n = document.createElement('div');
         n.className = 'name';
@@ -221,13 +248,162 @@
         eink.recently.forEach(function (a) { zuletzt.appendChild(kachel(a, 'recently')); });
         document.getElementById('zuletztKopf').style.display = eink.recently.length ? 'block' : 'none';
 
-        var liste = document.getElementById('vorschlaege');
-        liste.innerHTML = '';
-        eink.recently.forEach(function (a) {
-            var o = document.createElement('option');
-            o.value = a.name;
-            liste.appendChild(o);
+    }
+
+    // ---------- Vorschläge beim Tippen ----------
+    var treffer = [];
+    var auswahl = -1;
+
+    function eingabeTeile() {
+        var text = document.getElementById('neu').value;
+        var i = text.indexOf(',');
+        return {
+            name: (i < 0 ? text : text.substring(0, i)).trim(),
+            spec: i < 0 ? '' : text.substring(i + 1).trim()
+        };
+    }
+
+    function aufListe(key) {
+        return eink.purchase.some(function (a) { return a.key === key; });
+    }
+
+    function zuletzt(key) {
+        return eink.recently.some(function (a) { return a.key === key; });
+    }
+
+    function suchen() {
+        var q = eingabeTeile().name.toLowerCase();
+        treffer = [];
+        auswahl = -1;
+        if (!q) {
+            schliessenVorschlaege();
+            return;
+        }
+        var genau = false;
+        (eink.katalog || []).forEach(function (e) {
+            var name = e[1].toLowerCase();
+            var key = e[0].toLowerCase();
+            var rang = -1;
+            if (name.indexOf(q) === 0 || key.indexOf(q) === 0) rang = 0;
+            else if ((' ' + name).indexOf(' ' + q) >= 0 || name.indexOf('-' + q) >= 0) rang = 1;
+            else if (name.indexOf(q) > 0 || key.indexOf(q) > 0) rang = 2;
+            if (rang < 0) return;
+            if (name === q) genau = true;
+            if (zuletzt(e[0]) && rang > 0) rang -= 0.5;
+            treffer.push({ key: e[0], name: e[1], icon: e[2], buchstabe: e[3], rang: rang });
         });
+        treffer.sort(function (a, b) { return a.rang - b.rang || a.name.length - b.name.length || a.name.localeCompare(b.name); });
+        treffer = treffer.slice(0, 8);
+        if (!genau) {
+            var roh = eingabeTeile().name;
+            treffer.push({ key: '', name: roh, frei: true });
+        }
+        if (treffer.length) auswahl = 0;
+        zeichnenVorschlaege(q);
+    }
+
+    function hervorheben(text, q) {
+        var i = text.toLowerCase().indexOf(q);
+        var span = document.createElement('span');
+        if (i < 0 || !q) {
+            span.textContent = text;
+            return span;
+        }
+        span.appendChild(document.createTextNode(text.substring(0, i)));
+        var b = document.createElement('b');
+        b.textContent = text.substring(i, i + q.length);
+        span.appendChild(b);
+        span.appendChild(document.createTextNode(text.substring(i + q.length)));
+        return span;
+    }
+
+    function zeichnenVorschlaege(q) {
+        var box = document.getElementById('vorschlaege');
+        box.innerHTML = '';
+        treffer.forEach(function (t, i) {
+            var zeile = document.createElement('div');
+            zeile.className = 'vorschlag' + (i === auswahl ? ' aktiv' : '');
+            var sym = document.createElement('div');
+            sym.className = 'symbol';
+            if (t.frei) {
+                sym.textContent = '+';
+                sym.style.fontSize = '20px';
+            } else {
+                sym.appendChild(symbol(t.icon, t.buchstabe, t.name));
+            }
+            zeile.appendChild(sym);
+            var text = document.createElement('div');
+            text.className = 'text';
+            if (t.frei) {
+                text.textContent = '„' + t.name + '“ als eigenen Artikel hinzufügen';
+            } else {
+                text.appendChild(hervorheben(t.name, q));
+            }
+            zeile.appendChild(text);
+            if (!t.frei && (aufListe(t.key) || zuletzt(t.key))) {
+                var h = document.createElement('div');
+                h.className = 'hinweis';
+                h.textContent = aufListe(t.key) ? 'auf der Liste' : 'zuletzt';
+                zeile.appendChild(h);
+            }
+            zeile.onmousedown = function (e) {
+                e.preventDefault();
+                waehlen(i);
+            };
+            box.appendChild(zeile);
+        });
+        box.classList.toggle('offen', treffer.length > 0);
+    }
+
+    function schliessenVorschlaege() {
+        document.getElementById('vorschlaege').classList.remove('offen');
+    }
+
+    function tasten(e) {
+        var offen = document.getElementById('vorschlaege').classList.contains('offen');
+        if (!offen || !treffer.length) return;
+        if (e.key === 'ArrowDown') {
+            auswahl = (auswahl + 1) % treffer.length;
+        } else if (e.key === 'ArrowUp') {
+            auswahl = (auswahl - 1 + treffer.length) % treffer.length;
+        } else if (e.key === 'Escape') {
+            schliessenVorschlaege();
+            return;
+        } else if (e.key === 'Enter' && auswahl >= 0) {
+            e.preventDefault();
+            waehlen(auswahl);
+            return;
+        } else {
+            return;
+        }
+        e.preventDefault();
+        zeichnenVorschlaege(eingabeTeile().name.toLowerCase());
+    }
+
+    function waehlen(i) {
+        var t = treffer[i];
+        if (!t) return;
+        var spec = eingabeTeile().spec;
+        var feld = document.getElementById('neu');
+        if (t.frei) {
+            senden({ aktion: 'hinzufuegen', text: t.name + (spec ? ', ' + spec : '') });
+            meldung('„' + t.name + '“ wird hinzugefügt …');
+        } else if (aufListe(t.key) && !spec) {
+            meldung('„' + t.name + '“ steht schon auf der Liste.');
+        } else {
+            senden({ aktion: 'artikel', key: t.key, spec: spec });
+            var i2 = eink.recently.findIndex(function (a) { return a.key === t.key; });
+            if (i2 >= 0) eink.recently.splice(i2, 1);
+            if (!aufListe(t.key)) {
+                eink.purchase.push({ key: t.key, name: t.name, spec: spec, icon: t.icon, buchstabe: t.buchstabe });
+            }
+            zeichnen();
+            meldung('„' + t.name + '“ hinzugefügt.');
+        }
+        feld.value = '';
+        treffer = [];
+        schliessenVorschlaege();
+        feld.focus();
     }
 
     function hinzufuegen(e) {
@@ -237,12 +413,13 @@
         if (!text) return;
         senden({ aktion: 'hinzufuegen', text: text });
         feld.value = '';
+        schliessenVorschlaege();
         meldung('Wird hinzugefügt …');
     }
 
     function benachrichtigen(typ, text) {
         senden({ aktion: 'benachrichtigen', typ: typ });
-        meldung('Benachrichtigung gesendet: ' + text);
+        meldung('„' + text + '“ wird gesendet …');
     }
 
     function oeffnen(artikel, bereich) {

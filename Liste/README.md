@@ -29,8 +29,8 @@ Eine Bring!-Einkaufsliste als Instanz in IP-Symcon.
 - Artikel antippen → abhaken (wandert nach „Zuletzt verwendet“)
 - „Zuletzt verwendet“ antippen → wieder auf die Liste
 - `⋮` oder Rechtsklick → Beschreibung ändern oder Artikel entfernen
-- Eingabefeld oben: `Artikel, Beschreibung` + Enter
-- Unten: Benachrichtigungen an alle Mitglieder
+- Eingabefeld oben: Beim Tippen erscheinen passende Artikel mit Symbol (Bring!-Katalog und eigene Artikel). Antippen oder mit Pfeiltasten + Enter hinzufügen. Eine Beschreibung nach einem Komma wird übernommen, z. B. `Milch, 2 Liter`
+- Unten: Benachrichtigungen an alle anderen Mitglieder der Liste (der Absender selbst bekommt keine Nachricht). Unter den Artikeln erscheint, ob das Senden geklappt hat
 
 Die Artikel-Symbole werden direkt im Browser von Bring! geladen. Eigene Artikel ohne Symbol erhalten den Anfangsbuchstaben.
 
