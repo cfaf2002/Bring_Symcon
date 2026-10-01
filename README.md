@@ -11,6 +11,7 @@ Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufüg
 | [Bring Konto](Konto/README.md) | I/O | Anmeldung am Bring!-Konto, Token-Verwaltung |
 | [Bring Konfigurator](Konfigurator/README.md) | Konfigurator | Legt die Listen des Kontos als Instanzen an |
 | [Bring Liste](Liste/README.md) | Gerät | Eine Liste mit Variablen, Kachel und Benachrichtigungen |
+| [Bring Übersicht](Uebersicht/README.md) | Gerät | Alle Listen in einer Kachel, Antippen öffnet die Liste, mit Zurück-Knopf |
 
 ## Voraussetzungen
 
@@ -22,7 +23,7 @@ Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufüg
 1. Im Objektbaum unter *Kern Instanzen → Modules* die URL `https://github.com/cfaf2002/Bring_Symcon` hinzufügen.
 2. Instanz **Bring Konfigurator** anlegen – die Konto-Instanz wird automatisch mit erstellt.
 3. In der Konto-Instanz den Nutzungshinweis bestätigen, E-Mail und Passwort eintragen und übernehmen.
-4. Im Konfigurator die gewünschten Listen erstellen.
+4. Im Konfigurator die gewünschten Listen erstellen – und bei Bedarf die „Übersicht“, die alle Listen in einer Kachel zusammenfasst.
 
 ## Datenfluss
 
@@ -39,8 +40,13 @@ Bring Konfigurator  ─┘
 | Bring Konto | EINK | {97F6071D-028A-4BFF-B873-1DC1C67F66E4} |
 | Bring Konfigurator | EINK | {ECCAFA95-80A1-44A5-900E-57C483BF0DFF} |
 | Bring Liste | EINK | {7EDEB801-A287-42F4-B60E-88DEC71E6305} |
+| Bring Übersicht | EINK | {354B6E1E-7D2A-476B-AEFC-1435851C1895} |
 
 ## Changelog
+
+**Version 1.0 (Build 11)**
+- Neues Modul „Bring Übersicht“: alle Listen in einer Kachel, Antippen öffnet die Liste, Zurück-Knopf zur Übersicht
+- Konfigurator bietet die Übersicht zum Anlegen an
 
 **Version 1.0 (Build 10)**
 - Bring!-Artikelkatalog wird automatisch einmal täglich abgeglichen (unabhängig vom Aktualisierungsintervall); fehlt er, alle 15 Minuten neuer Versuch, bei Ausfall bleibt der bisherige erhalten

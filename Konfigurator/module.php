@@ -95,6 +95,25 @@ class BringKonfigurator extends IPSModuleStrict
             ];
         }
 
+        // Übersicht über alle Listen in einer Kachel
+        $Uebersicht = 0;
+        foreach (IPS_GetInstanceListByModuleID(EINK::MODUL_UEBERSICHT) as $ID) {
+            if (IPS_GetInstance($ID)['ConnectionID'] == $Parent) {
+                $Uebersicht = $ID;
+                break;
+            }
+        }
+        array_unshift($Werte, [
+            'name'       => 'Übersicht (alle Listen in einer Kachel)',
+            'listUuid'   => '–',
+            'instanceID' => $Uebersicht,
+            'create'     => [
+                'moduleID'      => EINK::MODUL_UEBERSICHT,
+                'name'          => 'Einkaufslisten',
+                'configuration' => new stdClass()
+            ]
+        ]);
+
         $Form['actions'][1]['values'] = $Werte;
         return json_encode($Form);
     }

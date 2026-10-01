@@ -143,7 +143,10 @@ class BringListe extends IPSModuleStrict
                 $this->SendNotification(EINK::NOTIFY_CHANGED_LIST);
                 break;
             case 'Kachel':
-                $this->KachelAktion((string) $Value);
+                $Meldung = $this->KachelAktion((string) $Value);
+                if ($Meldung !== '') {
+                    $this->KachelMeldung($Meldung);
+                }
                 break;
             case 'Katalog':
                 if ($this->HasActiveParent() && $this->KatalogPruefen()) {
@@ -314,6 +317,28 @@ class BringListe extends IPSModuleStrict
         return $this->Benachrichtigen(EINK::NOTIFY_URGENT, [$Name]);
     }
 
+    /**
+     * Kachel-Daten für die Bring Übersicht (JSON).
+     */
+    public function GetTileData(bool $MitKatalog): string
+    {
+        $Daten = $this->KachelDaten();
+        $Daten['name'] = IPS_GetName($this->InstanceID);
+        $Daten['anzahl'] = count($this->ArtikelHolen()['purchase']);
+        if ($MitKatalog) {
+            $Daten['katalog'] = $this->KachelKatalog();
+        }
+        return json_encode($Daten);
+    }
+
+    /**
+     * Führt eine Kachel-Aktion aus (für die Bring Übersicht) und liefert ggf. eine Meldung.
+     */
+    public function TileAction(string $Aktion): string
+    {
+        return $this->KachelAktion($Aktion);
+    }
+
     // ------------------------------------------------------------------
     // Intern
     // ------------------------------------------------------------------
@@ -415,11 +440,11 @@ class BringListe extends IPSModuleStrict
         }
     }
 
-    private function KachelAktion(string $JSON): void
+    private function KachelAktion(string $JSON): string
     {
         $A = json_decode($JSON, true);
         if (!is_array($A)) {
-            return;
+            return '';
         }
         $Key = (string) ($A['key'] ?? '');
         switch ($A['aktion'] ?? '') {
@@ -446,10 +471,9 @@ class BringListe extends IPSModuleStrict
                 ];
                 $Typ = (string) ($A['typ'] ?? '');
                 $Ok = $this->SendNotification($Typ);
-                $this->KachelMeldung($Ok
+                return $Ok
                     ? '„' . ($Texte[$Typ] ?? $Typ) . '“ an die anderen Mitglieder der Liste gesendet.'
-                    : 'Benachrichtigung fehlgeschlagen: ' . $this->LetzterFehler);
-                break;
+                    : 'Benachrichtigung fehlgeschlagen: ' . $this->LetzterFehler;
             case 'artikel':
                 $Key = (string) ($A['key'] ?? '');
                 if ($Key !== '') {
@@ -460,6 +484,7 @@ class BringListe extends IPSModuleStrict
                 $this->Update();
                 break;
         }
+        return '';
     }
 
     private function ArtikelLesen(array $Liste): array

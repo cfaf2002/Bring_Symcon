@@ -15,6 +15,7 @@ class EINK
     public const MODUL_KONTO = '{97F6071D-028A-4BFF-B873-1DC1C67F66E4}';
     public const MODUL_KONFIGURATOR = '{ECCAFA95-80A1-44A5-900E-57C483BF0DFF}';
     public const MODUL_LISTE = '{7EDEB801-A287-42F4-B60E-88DEC71E6305}';
+    public const MODUL_UEBERSICHT = '{354B6E1E-7D2A-476B-AEFC-1435851C1895}';
 
     // Schnittstelle (Bring!-Web-App, inoffiziell)
     public const API_URL = 'https://api.getbring.com/rest/v2/';

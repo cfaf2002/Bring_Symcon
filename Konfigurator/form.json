@@ -13,10 +13,6 @@
             "rowCount": 10,
             "add": false,
             "delete": true,
-            "sort": {
-                "column": "name",
-                "direction": "ascending"
-            },
             "columns": [
                 {
                     "caption": "Name",
