@@ -42,6 +42,9 @@ Konfigurator           ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 3)**
+- Korrektur: Instanzen ließen sich nicht anlegen (GetCompatibleParents statt ConnectParent)
+
 **Version 1.0 (Build 2)**
 - Korrektur: Module wurden von Symcon nicht geladen (Basisklasse IPSModuleStrict)
 

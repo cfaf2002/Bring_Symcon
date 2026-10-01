@@ -15,7 +15,17 @@ class EinkaufslisteKonfigurator extends IPSModuleStrict
     public function Create(): void
     {
         parent::Create();
-        $this->ConnectParent(EINK::MODUL_KONTO);
+    }
+
+    /**
+     * Übergeordnete Instanz: Einkaufsliste Konto
+     */
+    public function GetCompatibleParents(): string
+    {
+        return json_encode([
+            'type'      => 'require',
+            'moduleIDs' => [EINK::MODUL_KONTO]
+        ]);
     }
 
     public function ApplyChanges(): void

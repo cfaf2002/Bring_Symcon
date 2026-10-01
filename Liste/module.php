@@ -25,7 +25,6 @@ class Einkaufsliste extends IPSModuleStrict
     {
         parent::Create();
 
-        $this->ConnectParent(EINK::MODUL_KONTO);
 
         $this->RegisterPropertyString('ListUuid', '');
         $this->RegisterPropertyString('ListName', '');
@@ -42,6 +41,17 @@ class Einkaufsliste extends IPSModuleStrict
 
         $this->RegisterTimer('Aktualisieren', 0, 'EINK_Update($_IPS[\'TARGET\']);');
         $this->RegisterTimer('Benachrichtigen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "AutoBenachrichtigung", true);');
+    }
+
+    /**
+     * Übergeordnete Instanz: Einkaufsliste Konto
+     */
+    public function GetCompatibleParents(): string
+    {
+        return json_encode([
+            'type'      => 'connect',
+            'moduleIDs' => [EINK::MODUL_KONTO]
+        ]);
     }
 
     public function ApplyChanges(): void
