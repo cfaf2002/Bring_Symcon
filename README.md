@@ -19,7 +19,7 @@ Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufüg
 
 ## Installation
 
-1. Im Objektbaum unter *Kern Instanzen → Modules* die URL `https://github.com/cfaf2002/Einkaufsliste-Bring-Symcon` hinzufügen.
+1. Im Objektbaum unter *Kern Instanzen → Modules* die URL `https://github.com/cfaf2002/Bring_Symcon` hinzufügen.
 2. Instanz **Einkaufsliste Konfigurator** anlegen – die Konto-Instanz wird automatisch mit erstellt.
 3. In der Konto-Instanz den Nutzungshinweis bestätigen, E-Mail und Passwort eintragen und übernehmen.
 4. Im Konfigurator die gewünschten Listen erstellen.
