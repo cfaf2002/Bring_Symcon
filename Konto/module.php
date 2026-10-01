@@ -21,6 +21,7 @@ class BringKonto extends IPSModuleStrict
         $this->RegisterPropertyBoolean('Aktiv', true);
         $this->RegisterPropertyString('EMail', '');
         $this->RegisterPropertyString('Passwort', '');
+        $this->RegisterPropertyInteger('NeueListen', 0);
 
         $this->RegisterAttributeString('Uuid', '');
         $this->RegisterAttributeString('PublicUuid', '');
@@ -29,8 +30,11 @@ class BringKonto extends IPSModuleStrict
         $this->RegisterAttributeString('RefreshToken', '');
         $this->RegisterAttributeInteger('TokenAblauf', 0);
         $this->RegisterAttributeString('LoginHash', '');
+        $this->RegisterAttributeString('BringListen', '');
+        $this->RegisterAttributeString('Gemeldet', '[]');
 
         $this->RegisterTimer('TokenRefresh', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "TokenRefresh", true);');
+        $this->RegisterTimer('ListenPruefen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "ListenPruefen", true);');
     }
 
     public function ApplyChanges(): void
@@ -38,6 +42,9 @@ class BringKonto extends IPSModuleStrict
         parent::ApplyChanges();
 
         $this->SetTimerInterval('TokenRefresh', 0);
+        $this->SetTimerInterval('ListenPruefen', 0);
+
+        $this->RegisterVariableString('NeueListen', 'Neue Listen in Bring!', ['PRESENTATION' => VARIABLE_PRESENTATION_VALUE_PRESENTATION, 'ICON' => 'list-check'], 1);
 
         if (IPS_GetKernelRunlevel() != KR_READY) {
             $this->RegisterMessage(0, IPS_KERNELSTARTED);
@@ -54,7 +61,10 @@ class BringKonto extends IPSModuleStrict
             $this->TokensLoeschen();
         }
 
-        $this->Verbinden();
+        if ($this->Verbinden()) {
+            $this->ListenAbgleichen();
+        }
+        $this->SetTimerInterval('ListenPruefen', 15 * 60 * 1000);
     }
 
     public function MessageSink(int $TimeStamp, int $SenderID, int $Message, array $Data): void
@@ -72,6 +82,9 @@ class BringKonto extends IPSModuleStrict
                 if ($this->Pruefen()) {
                     $this->Verbinden();
                 }
+                break;
+            case 'ListenPruefen':
+                $this->ListenAbgleichen();
                 break;
             default:
                 throw new Exception('Ungültiger Ident: ' . $Ident);
@@ -124,6 +137,24 @@ class BringKonto extends IPSModuleStrict
     }
 
     /**
+     * Gleicht die Listen der Bring!-App mit den Bring Listen in Symcon ab.
+     * Liefert ['neu' => [Namen], 'geloescht' => [Instanznamen]]
+     */
+    public function CheckLists(): array
+    {
+        $this->ListenAbgleichen();
+        return $this->HinweiseBerechnen();
+    }
+
+    /**
+     * Hinweise zu neuen/gelöschten Listen (für die Bring Übersicht), als JSON.
+     */
+    public function GetListHints(): string
+    {
+        return json_encode($this->HinweiseBerechnen());
+    }
+
+    /**
      * Anfragen der Kind-Instanzen.
      */
     public function ForwardData(string $JSONString): string
@@ -144,6 +175,105 @@ class BringKonto extends IPSModuleStrict
     // ------------------------------------------------------------------
     // Intern
     // ------------------------------------------------------------------
+
+    private function ListenAbgleichen(): void
+    {
+        if (!$this->Pruefen()) {
+            return;
+        }
+        $Result = $this->Anfrage('GET', 'bringusers/{uuid}/lists');
+        if (!$Result['Success'] || !is_array($Result['Data']) || !isset($Result['Data']['lists'])) {
+            $this->SendDebug('Listenabgleich', 'Listen konnten nicht geladen werden', 0);
+            return;
+        }
+        $Bring = [];
+        foreach ($Result['Data']['lists'] as $Liste) {
+            if (!empty($Liste['listUuid'])) {
+                $Bring[(string) $Liste['listUuid']] = (string) ($Liste['name'] ?? $Liste['listUuid']);
+            }
+        }
+
+        $this->WriteAttributeString('BringListen', json_encode($Bring));
+        $Symcon = $this->SymconListen();
+
+        $Neu = array_diff_key($Bring, $Symcon);
+        $Geloescht = array_diff_key($Symcon, $Bring);
+
+        // Neue Listen ggf. automatisch anlegen
+        if (count($Neu) && $this->ReadPropertyInteger('NeueListen') == 1) {
+            $Ort = count($Symcon) ? IPS_GetParent(reset($Symcon)) : 0;
+            foreach ($Neu as $Uuid => $Name) {
+                $ID = IPS_CreateInstance(EINK::MODUL_LISTE);
+                IPS_SetName($ID, $Name);
+                IPS_SetParent($ID, $Ort);
+                if (IPS_GetInstance($ID)['ConnectionID'] != $this->InstanceID) {
+                    if (IPS_GetInstance($ID)['ConnectionID'] > 0) {
+                        IPS_DisconnectInstance($ID);
+                    }
+                    IPS_ConnectInstance($ID, $this->InstanceID);
+                }
+                IPS_SetProperty($ID, 'ListUuid', $Uuid);
+                IPS_SetProperty($ID, 'ListName', $Name);
+                IPS_ApplyChanges($ID);
+                $this->LogMessage('Neue Bring!-Liste „' . $Name . '“ automatisch als Instanz angelegt (#' . $ID . ')', KL_MESSAGE);
+            }
+            $Neu = [];
+        }
+
+        // Jede Änderung nur einmal ins Meldungsfenster schreiben
+        $Gemeldet = json_decode($this->ReadAttributeString('Gemeldet'), true) ?: [];
+        $Aktuell = [];
+        foreach ($Neu as $Uuid => $Name) {
+            $Aktuell[] = 'neu:' . $Uuid;
+            if (!in_array('neu:' . $Uuid, $Gemeldet, true)) {
+                $this->LogMessage('Neue Bring!-Liste „' . $Name . '“ – bitte im Bring Konfigurator anlegen.', KL_WARNING);
+            }
+        }
+        foreach ($Geloescht as $Uuid => $ID) {
+            $Aktuell[] = 'weg:' . $Uuid;
+            if (!in_array('weg:' . $Uuid, $Gemeldet, true)) {
+                $this->LogMessage('Bring!-Liste der Instanz „' . IPS_GetName($ID) . '“ (#' . $ID . ') gibt es in Bring! nicht mehr.', KL_WARNING);
+            }
+        }
+        $this->WriteAttributeString('Gemeldet', json_encode($Aktuell));
+
+        $Hinweise = $this->HinweiseBerechnen();
+        $Text = count($Hinweise['neu']) ? implode(', ', $Hinweise['neu']) : '';
+        if ($this->GetValue('NeueListen') !== $Text) {
+            $this->SetValue('NeueListen', $Text);
+        }
+        $this->SendDebug('Listenabgleich', count($Bring) . ' Listen in Bring!, neu: ' . count($Hinweise['neu']) . ', gelöscht: ' . count($Hinweise['geloescht']), 0);
+    }
+
+    private function SymconListen(): array
+    {
+        $Symcon = [];
+        foreach (IPS_GetInstanceListByModuleID(EINK::MODUL_LISTE) as $ID) {
+            if (IPS_GetInstance($ID)['ConnectionID'] == $this->InstanceID) {
+                $Uuid = (string) IPS_GetProperty($ID, 'ListUuid');
+                if ($Uuid !== '') {
+                    $Symcon[$Uuid] = $ID;
+                }
+            }
+        }
+        return $Symcon;
+    }
+
+    /**
+     * Vergleicht die zuletzt geladenen Bring!-Listen mit den aktuellen Instanzen (ohne Cloud-Abruf).
+     */
+    private function HinweiseBerechnen(): array
+    {
+        $Bring = json_decode($this->ReadAttributeString('BringListen'), true);
+        if (!is_array($Bring)) {
+            return ['neu' => [], 'geloescht' => []];
+        }
+        $Symcon = $this->SymconListen();
+        return [
+            'neu'       => array_values(array_diff_key($Bring, $Symcon)),
+            'geloescht' => array_values(array_map('IPS_GetName', array_diff_key($Symcon, $Bring)))
+        ];
+    }
 
     /**
      * Prüft Hinweis, Aktiv-Schalter und Zugangsdaten und setzt den Status.

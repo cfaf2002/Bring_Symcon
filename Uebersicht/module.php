@@ -17,6 +17,7 @@ class BringUebersicht extends IPSModuleStrict
     {
         parent::Create();
         $this->RegisterAttributeString('Beobachtet', '[]');
+        $this->RegisterAttributeString('LetzteHinweise', '');
         $this->RegisterTimer('Pruefen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "Pruefen", true);');
     }
 
@@ -92,7 +93,12 @@ class BringUebersicht extends IPSModuleStrict
                 }
                 break;
             case 'Pruefen':
-                if ($this->Beobachten()) {
+                $Geaendert = $this->Beobachten();
+                $Hinweise = json_encode($this->Hinweise());
+                if ($Hinweise !== $this->ReadAttributeString('LetzteHinweise')) {
+                    $Geaendert = true;
+                }
+                if ($Geaendert) {
                     $this->Senden();
                 }
                 break;
@@ -175,9 +181,29 @@ class BringUebersicht extends IPSModuleStrict
         return $Alt !== $Neu;
     }
 
+    /**
+     * Hinweise des Kontos zu neuen bzw. in Bring! gelöschten Listen.
+     */
+    private function Hinweise(): array
+    {
+        $Konto = IPS_GetInstance($this->InstanceID)['ConnectionID'];
+        if ($Konto > 0) {
+            try {
+                $Hinweise = json_decode((string) EINK_GetListHints($Konto), true);
+                if (is_array($Hinweise)) {
+                    return $Hinweise + ['neu' => [], 'geloescht' => []];
+                }
+            } catch (Throwable $e) {
+                $this->SendDebug('Hinweise', $e->getMessage(), 0);
+            }
+        }
+        return ['neu' => [], 'geloescht' => []];
+    }
+
     private function Daten(bool $MitKatalog): array
     {
-        $Daten = ['listen' => []];
+        $Daten = ['listen' => [], 'hinweise' => $this->Hinweise()];
+        $this->WriteAttributeString('LetzteHinweise', json_encode($Daten['hinweise']));
         foreach ($this->Listen() as $ID) {
             try {
                 $Liste = json_decode((string) EINK_GetTileData($ID, $MitKatalog && !isset($Daten['katalog'])), true);

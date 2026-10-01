@@ -44,6 +44,11 @@ Bring Konfigurator  ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 12)**
+- Bring Konto gleicht alle 15 Minuten die Listen der Bring!-App mit Symcon ab: neue und in der App gelöschte Listen erscheinen im Meldungsfenster, in der Variable „Neue Listen in Bring!“ und als Hinweis in der Bring Übersicht
+- Optional: neue Listen automatisch als Bring Liste anlegen
+- Button „Listen jetzt abgleichen“ und Befehl EINK_CheckLists
+
 **Version 1.0 (Build 11)**
 - Neues Modul „Bring Übersicht“: alle Listen in einer Kachel, Antippen öffnet die Liste, Zurück-Knopf zur Übersicht
 - Konfigurator bietet die Übersicht zum Anlegen an

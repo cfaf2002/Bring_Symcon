@@ -41,6 +41,10 @@
     .karte-leer { color: var(--eink-leise); font-size: 14px; }
     .ueb-leer { padding: 24px 8px; text-align: center; color: var(--eink-leise); border: 1px dashed var(--eink-rand); border-radius: 12px; }
     .ueb-meldung { font-size: 12px; color: var(--eink-leise); min-height: 14px; }
+    .ueb-hinweis { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--eink-flaeche); border-left: 4px solid var(--eink-akzent); font-size: 14px; line-height: 1.35; }
+    .ueb-hinweis .icon { font-size: 18px; line-height: 1.1; }
+    .ueb-hinweis b { font-weight: 600; }
+    .ueb-hinweis .klein { color: var(--eink-leise); font-size: 13px; }
 
     .zurueck-leiste { display: flex; align-items: center; gap: 10px; margin-bottom: -2px; }
     .zurueck-leiste .knopf { display: flex; align-items: center; gap: 6px; padding: 0 14px 0 10px; }
@@ -49,13 +53,14 @@
 </style>
 
 <div class="ueb" id="ueb" lang="de">
+    <div id="ueb-hinweise" style="display:flex;flex-direction:column;gap:8px"></div>
     <div class="ueb-raster" id="ueb-raster"></div>
     <div class="ueb-leer" id="ueb-leer" style="display:none">Noch keine Bring!-Listen angelegt. Listen über den Bring Konfigurator erstellen.</div>
     <div class="ueb-meldung" id="ueb-meldung"></div>
 </div>
 
 <script>
-    var uebersicht = { listen: [], katalog: [] };
+    var uebersicht = { listen: [], katalog: [], hinweise: { neu: [], geloescht: [] } };
     var aktuell = null;
 
     (function () {
@@ -91,6 +96,7 @@
         }
         if (d.katalog) uebersicht.katalog = d.katalog;
         if (d.listen) uebersicht.listen = d.listen;
+        if (d.hinweise) uebersicht.hinweise = d.hinweise;
         anzeigen();
     }
 
@@ -148,7 +154,44 @@
         zeichnenUebersicht();
     }
 
+    function namenListe(namen) {
+        return namen.map(function (n) { return '„' + n + '“'; }).join(', ');
+    }
+
+    function zeichnenHinweise() {
+        var box = document.getElementById('ueb-hinweise');
+        box.innerHTML = '';
+        var h = uebersicht.hinweise || { neu: [], geloescht: [] };
+        function hinweis(icon, titel, text) {
+            var el = document.createElement('div');
+            el.className = 'ueb-hinweis';
+            var i = document.createElement('div');
+            i.className = 'icon';
+            i.textContent = icon;
+            var t = document.createElement('div');
+            var b = document.createElement('b');
+            b.textContent = titel;
+            var k = document.createElement('div');
+            k.className = 'klein';
+            k.textContent = text;
+            t.appendChild(b);
+            t.appendChild(k);
+            el.appendChild(i);
+            el.appendChild(t);
+            box.appendChild(el);
+        }
+        if (h.neu && h.neu.length) {
+            hinweis('🆕', (h.neu.length === 1 ? 'Neue Liste in Bring!: ' : 'Neue Listen in Bring!: ') + namenListe(h.neu),
+                'Im Bring Konfigurator anlegen, dann erscheint sie hier. Alternativ im Bring Konto „automatisch anlegen“ wählen.');
+        }
+        if (h.geloescht && h.geloescht.length) {
+            hinweis('⚠️', 'Nicht mehr in Bring!: ' + namenListe(h.geloescht),
+                'Die Liste wurde in der App gelöscht. Die Instanz kann im Bring Konfigurator entfernt werden.');
+        }
+    }
+
     function zeichnenUebersicht() {
+        zeichnenHinweise();
         var raster = document.getElementById('ueb-raster');
         raster.innerHTML = '';
         document.getElementById('ueb-leer').style.display = uebersicht.listen.length ? 'none' : 'block';

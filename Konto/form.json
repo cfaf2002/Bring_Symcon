@@ -47,6 +47,33 @@
                     "caption": "Hinweis: Bei Anmeldung über Google oder Apple muss in der Bring!-App zuerst ein eigenes Passwort gesetzt werden."
                 }
             ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Neue Listen aus der Bring!-App",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "Select",
+                    "name": "NeueListen",
+                    "caption": "Wenn in der App eine neue Liste angelegt wird",
+                    "width": "420px",
+                    "options": [
+                        {
+                            "caption": "Hinweis anzeigen (Anlegen im Konfigurator)",
+                            "value": 0
+                        },
+                        {
+                            "caption": "Automatisch als Bring Liste anlegen",
+                            "value": 1
+                        }
+                    ]
+                },
+                {
+                    "type": "Label",
+                    "caption": "Der Abgleich läuft alle 15 Minuten. Neue und gelöschte Listen erscheinen im Meldungsfenster, in der Variable „Neue Listen in Bring!“ und in der Bring Übersicht."
+                }
+            ]
         }
     ],
     "actions": [
@@ -59,6 +86,11 @@
             "type": "Button",
             "caption": "Verbindung testen",
             "onClick": "echo EINK_Login($id) ? 'Anmeldung erfolgreich.' : 'Anmeldung fehlgeschlagen. Details im Meldungsfenster.';"
+        },
+        {
+            "type": "Button",
+            "caption": "Listen jetzt abgleichen",
+            "onClick": "$h = EINK_CheckLists($id); echo count($h['neu']) || count($h['geloescht']) ? 'Neu: ' . (implode(', ', $h['neu']) ?: '–') . \"\\nNicht mehr in Bring!: \" . (implode(', ', $h['geloescht']) ?: '–') : 'Alle Listen sind in Symcon angelegt.';"
         }
     ],
     "status": [
