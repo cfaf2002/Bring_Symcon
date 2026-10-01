@@ -10,7 +10,7 @@ require_once __DIR__ . '/../libs/EINK.php';
  *
  * Autor: Armin Frohwerk
  */
-class EinkaufslisteKonfigurator extends IPSModule
+class EinkaufslisteKonfigurator extends IPSModuleStrict
 {
     public function Create(): void
     {

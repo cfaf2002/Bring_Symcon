@@ -11,7 +11,7 @@ require_once __DIR__ . '/../libs/EINK.php';
  *
  * Autor: Armin Frohwerk
  */
-class Einkaufsliste extends IPSModule
+class Einkaufsliste extends IPSModuleStrict
 {
     private const BENACHRICHTIGUNGEN = [
         1 => EINK::NOTIFY_GOING_SHOPPING,

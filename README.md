@@ -42,6 +42,9 @@ Konfigurator           ─┘
 
 ## Changelog
 
+**Version 1.0 (Build 2)**
+- Korrektur: Module wurden von Symcon nicht geladen (Basisklasse IPSModuleStrict)
+
 **Version 1.0 (Build 1)**
 - Erste Version: Konto, Konfigurator, Liste mit Variablen, eigener Kachel, Benachrichtigungen und automatischer Aktualisierung
 
