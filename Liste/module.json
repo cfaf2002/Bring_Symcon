@@ -1,0 +1,19 @@
+{
+    "id": "{7EDEB801-A287-42F4-B60E-88DEC71E6305}",
+    "name": "Einkaufsliste",
+    "type": 3,
+    "vendor": "Armin Frohwerk",
+    "aliases": [
+        "Einkaufsliste",
+        "Bring Liste"
+    ],
+    "parentRequirements": [
+        "{C4FC5708-5510-46F2-850F-FEFA4791844D}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{8DB09141-BB64-4187-970E-7C6A4D2E79EC}"
+    ],
+    "prefix": "EINK",
+    "url": "https://github.com/cfaf2002/Einkaufsliste-Bring-Symcon/blob/main/Liste/README.md"
+}

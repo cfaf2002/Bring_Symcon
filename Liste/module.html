@@ -1,0 +1,233 @@
+<style>
+    :root {
+        --eink-akzent: #e0584f;
+        --eink-akzent-text: #ffffff;
+        --eink-flaeche: rgba(127, 127, 127, 0.14);
+        --eink-rand: rgba(127, 127, 127, 0.35);
+        --eink-leise: rgba(127, 127, 127, 0.85);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: transparent; color: inherit; font-family: inherit; }
+    .eink { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px 8px; height: 100%; overflow-y: auto; }
+    .kopf { display: flex; align-items: center; gap: 8px; }
+    .titel { font-size: 1.15em; font-weight: 600; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .anzahl { min-width: 26px; padding: 2px 8px; border-radius: 12px; background: var(--eink-akzent); color: var(--eink-akzent-text); font-size: 0.85em; text-align: center; font-weight: 600; }
+    .knopf { border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 0.85em; cursor: pointer; }
+    .knopf:active { transform: scale(0.97); }
+    .knopf.haupt { background: var(--eink-akzent); color: var(--eink-akzent-text); border-color: var(--eink-akzent); }
+    .eingabe { display: flex; gap: 6px; }
+    .eingabe input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--eink-rand); background: var(--eink-flaeche); color: inherit; font: inherit; }
+    .raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 6px; }
+    .artikel { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; padding: 6px 4px 4px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; cursor: pointer; user-select: none; overflow: hidden; }
+    .artikel.kaufen { background: var(--eink-akzent); color: var(--eink-akzent-text); }
+    .artikel.zuletzt { background: var(--eink-flaeche); }
+    .artikel:active { transform: scale(0.96); }
+    .artikel img { width: 40%; max-width: 46px; aspect-ratio: 1 / 1; object-fit: contain; }
+    .artikel.kaufen img { filter: brightness(0) invert(1); }
+    .zeichen { width: 40%; max-width: 46px; aspect-ratio: 1 / 1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.3em; border: 2px solid currentColor; }
+    .name { margin-top: 4px; font-size: 0.8em; line-height: 1.1; max-height: 2.2em; overflow: hidden; word-break: break-word; }
+    .spec { font-size: 0.7em; opacity: 0.85; line-height: 1.1; max-height: 1.1em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 100%; }
+    .mehr { position: absolute; top: 2px; right: 2px; width: 24px; height: 24px; border-radius: 50%; border: none; background: rgba(0, 0, 0, 0.18); color: inherit; font-size: 14px; line-height: 24px; cursor: pointer; padding: 0; }
+    .abschnitt { font-size: 0.85em; color: var(--eink-leise); font-weight: 600; margin-top: 4px; }
+    .leer { padding: 18px 8px; text-align: center; color: var(--eink-leise); border: 1px dashed var(--eink-rand); border-radius: 10px; }
+    .fuss { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 4px; }
+    .meldung { font-size: 0.8em; color: var(--eink-leise); min-height: 1em; }
+    .dialog { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.45); display: none; align-items: center; justify-content: center; padding: 16px; }
+    .dialog.offen { display: flex; }
+    .dialog-box { background: Canvas; color: CanvasText; border-radius: 12px; padding: 14px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+    .dialog-box h3 { margin: 0; font-size: 1.05em; }
+    .dialog-box input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--eink-rand); background: transparent; color: inherit; font: inherit; }
+    .dialog-knoepfe { display: flex; gap: 6px; justify-content: flex-end; flex-wrap: wrap; }
+</style>
+
+<div class="eink">
+    <div class="kopf">
+        <div class="titel" id="titel">Einkaufsliste</div>
+        <div class="anzahl" id="anzahl">0</div>
+        <button class="knopf" title="Aktualisieren" onclick="senden({aktion:'aktualisieren'})">⟳</button>
+    </div>
+
+    <form class="eingabe" onsubmit="hinzufuegen(event)">
+        <input id="neu" type="text" placeholder="Artikel, Beschreibung" autocomplete="off" list="vorschlaege">
+        <datalist id="vorschlaege"></datalist>
+        <button class="knopf haupt" type="submit">+</button>
+    </form>
+
+    <div id="kaufen" class="raster"></div>
+    <div id="leer" class="leer" style="display:none">Alles erledigt – die Liste ist leer.</div>
+
+    <div id="zuletztKopf" class="abschnitt" style="display:none">Zuletzt verwendet</div>
+    <div id="zuletzt" class="raster"></div>
+
+    <div class="meldung" id="meldung"></div>
+
+    <div class="fuss">
+        <button class="knopf" onclick="benachrichtigen('GOING_SHOPPING', 'Gehe einkaufen')">Gehe einkaufen</button>
+        <button class="knopf" onclick="benachrichtigen('SHOPPING_DONE', 'Einkauf erledigt')">Einkauf erledigt</button>
+        <button class="knopf" onclick="benachrichtigen('CHANGED_LIST', 'Liste geändert')">Liste geändert</button>
+    </div>
+</div>
+
+<div class="dialog" id="dialog" onclick="if (event.target === this) schliessen()">
+    <div class="dialog-box">
+        <h3 id="dialogTitel">Artikel</h3>
+        <input id="dialogSpec" type="text" placeholder="Beschreibung (z. B. 2 Liter)">
+        <div class="dialog-knoepfe">
+            <button class="knopf" onclick="entfernen()">Entfernen</button>
+            <button class="knopf" onclick="schliessen()">Abbrechen</button>
+            <button class="knopf haupt" onclick="speichern()">Speichern</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    var eink = { titel: '', bilder: '', purchase: [], recently: [] };
+    var einkAktuell = null;
+
+    function handleMessage(data) {
+        try {
+            eink = (typeof data === 'string') ? JSON.parse(data) : data;
+        } catch (e) {
+            return;
+        }
+        zeichnen();
+    }
+
+    function senden(aktion) {
+        requestAction('Kachel', JSON.stringify(aktion));
+    }
+
+    function meldung(text) {
+        var m = document.getElementById('meldung');
+        m.textContent = text;
+        clearTimeout(meldung.t);
+        meldung.t = setTimeout(function () { m.textContent = ''; }, 3000);
+    }
+
+    function kachel(artikel, bereich) {
+        var el = document.createElement('div');
+        el.className = 'artikel ' + (bereich === 'purchase' ? 'kaufen' : 'zuletzt');
+        el.title = bereich === 'purchase' ? 'Antippen zum Abhaken' : 'Antippen zum Hinzufügen';
+
+        var img = document.createElement('img');
+        img.alt = '';
+        img.loading = 'lazy';
+        img.src = eink.bilder + artikel.icon + '.png';
+        img.onerror = function () {
+            if (!img.dataset.ersatz && artikel.buchstabe) {
+                img.dataset.ersatz = '1';
+                img.src = eink.bilder + artikel.buchstabe + '.png';
+            } else {
+                var z = document.createElement('div');
+                z.className = 'zeichen';
+                z.textContent = (artikel.name || '?').charAt(0).toUpperCase();
+                img.replaceWith(z);
+            }
+        };
+        el.appendChild(img);
+
+        var n = document.createElement('div');
+        n.className = 'name';
+        n.textContent = artikel.name;
+        el.appendChild(n);
+
+        if (artikel.spec) {
+            var s = document.createElement('div');
+            s.className = 'spec';
+            s.textContent = artikel.spec;
+            el.appendChild(s);
+        }
+
+        var mehr = document.createElement('button');
+        mehr.className = 'mehr';
+        mehr.textContent = '⋯';
+        mehr.title = 'Bearbeiten';
+        mehr.onclick = function (e) {
+            e.stopPropagation();
+            oeffnen(artikel, bereich);
+        };
+        el.appendChild(mehr);
+
+        el.onclick = function () {
+            if (bereich === 'purchase') {
+                verschieben(artikel.key, 'purchase', 'recently');
+                senden({ aktion: 'abhaken', key: artikel.key });
+            } else {
+                verschieben(artikel.key, 'recently', 'purchase');
+                senden({ aktion: 'wieder', key: artikel.key });
+            }
+        };
+        return el;
+    }
+
+    // Sofortige Rückmeldung, bevor die Cloud antwortet
+    function verschieben(key, von, nach) {
+        var i = eink[von].findIndex(function (a) { return a.key === key; });
+        if (i < 0) return;
+        var a = eink[von].splice(i, 1)[0];
+        if (nach === 'recently') eink.recently.unshift(a); else eink.purchase.push(a);
+        zeichnen();
+    }
+
+    function zeichnen() {
+        document.getElementById('titel').textContent = eink.titel || 'Einkaufsliste';
+        document.getElementById('anzahl').textContent = eink.purchase.length;
+
+        var kaufen = document.getElementById('kaufen');
+        kaufen.innerHTML = '';
+        eink.purchase.forEach(function (a) { kaufen.appendChild(kachel(a, 'purchase')); });
+        document.getElementById('leer').style.display = eink.purchase.length ? 'none' : 'block';
+
+        var zuletzt = document.getElementById('zuletzt');
+        zuletzt.innerHTML = '';
+        eink.recently.forEach(function (a) { zuletzt.appendChild(kachel(a, 'recently')); });
+        document.getElementById('zuletztKopf').style.display = eink.recently.length ? 'block' : 'none';
+
+        var liste = document.getElementById('vorschlaege');
+        liste.innerHTML = '';
+        eink.recently.forEach(function (a) {
+            var o = document.createElement('option');
+            o.value = a.name;
+            liste.appendChild(o);
+        });
+    }
+
+    function hinzufuegen(e) {
+        e.preventDefault();
+        var feld = document.getElementById('neu');
+        var text = feld.value.trim();
+        if (!text) return;
+        senden({ aktion: 'hinzufuegen', text: text });
+        feld.value = '';
+        meldung('Wird hinzugefügt …');
+    }
+
+    function benachrichtigen(typ, text) {
+        senden({ aktion: 'benachrichtigen', typ: typ });
+        meldung('Benachrichtigung gesendet: ' + text);
+    }
+
+    function oeffnen(artikel, bereich) {
+        einkAktuell = artikel;
+        document.getElementById('dialogTitel').textContent = artikel.name;
+        document.getElementById('dialogSpec').value = artikel.spec || '';
+        document.getElementById('dialog').classList.add('offen');
+    }
+
+    function schliessen() {
+        document.getElementById('dialog').classList.remove('offen');
+        einkAktuell = null;
+    }
+
+    function speichern() {
+        if (!einkAktuell) return;
+        senden({ aktion: 'beschreibung', key: einkAktuell.key, spec: document.getElementById('dialogSpec').value });
+        schliessen();
+    }
+
+    function entfernen() {
+        if (!einkAktuell) return;
+        senden({ aktion: 'entfernen', key: einkAktuell.key });
+        schliessen();
+    }
+</script>

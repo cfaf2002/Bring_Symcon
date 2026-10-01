@@ -1,0 +1,36 @@
+{
+    "elements": [],
+    "actions": [
+        {
+            "type": "Label",
+            "caption": "",
+            "visible": false
+        },
+        {
+            "type": "Configurator",
+            "name": "Listen",
+            "caption": "Einkaufslisten im Bring!-Konto",
+            "rowCount": 10,
+            "add": false,
+            "delete": true,
+            "sort": {
+                "column": "name",
+                "direction": "ascending"
+            },
+            "columns": [
+                {
+                    "caption": "Name",
+                    "name": "name",
+                    "width": "auto"
+                },
+                {
+                    "caption": "Listen-ID",
+                    "name": "listUuid",
+                    "width": "340px"
+                }
+            ],
+            "values": []
+        }
+    ],
+    "status": []
+}

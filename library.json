@@ -1,0 +1,12 @@
+{
+    "id": "{3A46CBF1-6533-4F75-ADFF-EA24EE75FD2D}",
+    "name": "Einkaufsliste",
+    "author": "Armin Frohwerk",
+    "url": "https://github.com/cfaf2002/Einkaufsliste-Bring-Symcon",
+    "compatibility": {
+        "version": "8.1"
+    },
+    "version": "1.0",
+    "build": 1,
+    "date": 1790839722
+}

@@ -1,0 +1,91 @@
+{
+    "elements": [
+        {
+            "type": "ExpansionPanel",
+            "caption": "Nutzungshinweis",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "Label",
+                    "caption": "Dieses Modul nutzt die nicht offiziell dokumentierte Schnittstelle der Bring!-Web-App. Es steht in keiner Verbindung zur Bring! Labs AG und ist nur für die private Nutzung gedacht."
+                },
+                {
+                    "type": "Label",
+                    "caption": "Bring! kann die Schnittstelle jederzeit ändern – dann funktioniert das Modul ggf. nicht mehr. Die Nutzung erfolgt auf eigene Verantwortung."
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "HinweisBestaetigt",
+                    "caption": "Ich habe den Hinweis gelesen und bin einverstanden"
+                }
+            ]
+        },
+        {
+            "type": "CheckBox",
+            "name": "Aktiv",
+            "caption": "Instanz aktiv"
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Bring!-Zugang",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "ValidationTextBox",
+                    "name": "EMail",
+                    "caption": "E-Mail",
+                    "width": "350px"
+                },
+                {
+                    "type": "PasswordTextBox",
+                    "name": "Passwort",
+                    "caption": "Passwort",
+                    "width": "350px"
+                },
+                {
+                    "type": "Label",
+                    "caption": "Hinweis: Bei Anmeldung über Google oder Apple muss in der Bring!-App zuerst ein eigenes Passwort gesetzt werden."
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Label",
+            "name": "Kontoinfo",
+            "caption": "Nicht angemeldet"
+        },
+        {
+            "type": "Button",
+            "caption": "Verbindung testen",
+            "onClick": "echo EINK_Login($id) ? 'Anmeldung erfolgreich.' : 'Anmeldung fehlgeschlagen. Details im Meldungsfenster.';"
+        }
+    ],
+    "status": [
+        {
+            "code": 102,
+            "icon": "active",
+            "caption": "Verbunden"
+        },
+        {
+            "code": 104,
+            "icon": "inactive",
+            "caption": "Instanz ist deaktiviert"
+        },
+        {
+            "code": 201,
+            "icon": "inactive",
+            "caption": "Bitte den Nutzungshinweis bestätigen"
+        },
+        {
+            "code": 202,
+            "icon": "inactive",
+            "caption": "Bitte E-Mail und Passwort eintragen"
+        },
+        {
+            "code": 203,
+            "icon": "error",
+            "caption": "Anmeldung fehlgeschlagen – Zugangsdaten prüfen"
+        }
+    ]
+}

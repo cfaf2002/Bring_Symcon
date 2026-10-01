@@ -1,0 +1,19 @@
+{
+    "id": "{ECCAFA95-80A1-44A5-900E-57C483BF0DFF}",
+    "name": "Einkaufsliste Konfigurator",
+    "type": 4,
+    "vendor": "Armin Frohwerk",
+    "aliases": [
+        "Einkaufsliste Konfigurator",
+        "Bring Konfigurator"
+    ],
+    "parentRequirements": [
+        "{C4FC5708-5510-46F2-850F-FEFA4791844D}"
+    ],
+    "childRequirements": [],
+    "implemented": [
+        "{8DB09141-BB64-4187-970E-7C6A4D2E79EC}"
+    ],
+    "prefix": "EINK",
+    "url": "https://github.com/cfaf2002/Einkaufsliste-Bring-Symcon/blob/main/Konfigurator/README.md"
+}

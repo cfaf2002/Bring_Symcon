@@ -1,0 +1,84 @@
+{
+    "elements": [
+        {
+            "type": "Select",
+            "name": "ListUuid",
+            "caption": "Liste",
+            "width": "350px",
+            "options": []
+        },
+        {
+            "type": "ValidationTextBox",
+            "name": "ListName",
+            "caption": "Anzeigename in der Kachel",
+            "width": "350px"
+        },
+        {
+            "type": "NumberSpinner",
+            "name": "Intervall",
+            "caption": "Liste aktualisieren alle",
+            "suffix": "Sekunden (0 = aus, min. 30)",
+            "minimum": 0
+        },
+        {
+            "type": "Select",
+            "name": "AutoBenachrichtigung",
+            "caption": "Nach Änderung aus Symcon \"Liste geändert\" senden",
+            "options": [
+                { "caption": "Nie", "value": 0 },
+                { "caption": "Sofort", "value": 1 },
+                { "caption": "Nach 30 Sekunden", "value": 30 },
+                { "caption": "Nach 1 Minute", "value": 60 },
+                { "caption": "Nach 5 Minuten", "value": 300 }
+            ]
+        },
+        {
+            "type": "ExpansionPanel",
+            "caption": "Kachel",
+            "expanded": true,
+            "items": [
+                {
+                    "type": "CheckBox",
+                    "name": "Kachel",
+                    "caption": "Eigene Kachel verwenden"
+                },
+                {
+                    "type": "CheckBox",
+                    "name": "ZuletztAnzeigen",
+                    "caption": "\"Zuletzt verwendet\" in der Kachel anzeigen"
+                },
+                {
+                    "type": "NumberSpinner",
+                    "name": "ZuletztMax",
+                    "caption": "Anzahl \"Zuletzt verwendet\"",
+                    "minimum": 0,
+                    "maximum": 60
+                }
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "type": "Button",
+            "caption": "Jetzt aktualisieren",
+            "onClick": "echo EINK_Update($id) ? 'Liste aktualisiert.' : 'Aktualisierung fehlgeschlagen.';"
+        }
+    ],
+    "status": [
+        {
+            "code": 102,
+            "icon": "active",
+            "caption": "Liste ist verbunden"
+        },
+        {
+            "code": 204,
+            "icon": "error",
+            "caption": "Keine Verbindung zum Konto"
+        },
+        {
+            "code": 205,
+            "icon": "inactive",
+            "caption": "Bitte eine Liste auswählen (oder Liste existiert nicht mehr)"
+        }
+    ]
+}
