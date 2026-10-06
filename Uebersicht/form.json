@@ -5,6 +5,25 @@
             "caption": "Zeigt alle Bring Listen dieses Kontos in einer Kachel. Antippen einer Liste öffnet sie, mit „Zurück“ geht es zur Übersicht. Die Reihenfolge entspricht der Position der Listen im Objektbaum."
         },
         {
+            "type": "Select",
+            "name": "TileTheme",
+            "caption": "Farbschema der Kachel",
+            "options": [
+                {
+                    "caption": "Symcon-Design (Farben der Visualisierung)",
+                    "value": 0
+                },
+                {
+                    "caption": "Dunkel",
+                    "value": 1
+                },
+                {
+                    "caption": "Hell",
+                    "value": 2
+                }
+            ]
+        },
+        {
             "type": "Label",
             "caption": ""
         }

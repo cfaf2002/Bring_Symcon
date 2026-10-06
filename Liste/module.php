@@ -32,6 +32,7 @@ class BringListe extends IPSModuleStrict
         $this->RegisterPropertyInteger('Intervall', 300);
         $this->RegisterPropertyInteger('AutoBenachrichtigung', 0);
         $this->RegisterPropertyBoolean('Kachel', true);
+        $this->RegisterPropertyInteger('TileTheme', 0);         // 0 = Symcon-Design, 1 = Dunkel, 2 = Hell
         $this->RegisterPropertyBoolean('ZuletztAnzeigen', true);
         $this->RegisterPropertyInteger('ZuletztMax', 12);
 
@@ -185,7 +186,7 @@ class BringListe extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
-        $HTML = file_get_contents(__DIR__ . '/module.html');
+        $HTML = file_get_contents(__DIR__ . '/tile.html');
         $Daten = $this->KachelDaten();
         $Daten['katalog'] = $this->KachelKatalog();
         $Daten = json_encode($Daten, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
@@ -721,6 +722,7 @@ class BringListe extends IPSModuleStrict
         $Daten = [
             'titel'    => $this->ReadPropertyString('ListName') !== '' ? $this->ReadPropertyString('ListName') : IPS_GetName($this->InstanceID),
             'bilder'   => EINK::IMAGES_URL,
+            'theme'    => $this->ReadPropertyInteger('TileTheme'),
             'purchase' => [],
             'recently' => []
         ];

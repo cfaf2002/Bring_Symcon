@@ -1,5 +1,18 @@
 # Bring für IP-Symcon
 
+[![IP-Symcon ab 8.1](https://img.shields.io/badge/IP--Symcon-ab_8.1-0b6fb3.svg)](https://www.symcon.de)
+[![Optimiert für Symcon 9.0](https://img.shields.io/badge/optimiert_f%C3%BCr-Symcon_9.0-0b6fb3.svg)](https://www.symcon.de/de/service/dokumentation/installation/migrationen/v81-v90-q1-2026/)
+[![Modul-Version 1.1 (Build 13)](https://img.shields.io/badge/Modul--Version-1.1_(Build_13)-informational.svg)](library.json)
+[![Tests](https://github.com/cfaf2002/Bring_Symcon/actions/workflows/tests.yml/badge.svg)](https://github.com/cfaf2002/Bring_Symcon/actions/workflows/tests.yml)
+[![PHP 8.3 und 8.5](https://img.shields.io/badge/PHP-8.3_%7C_8.5-777bb4.svg?logo=php&logoColor=white)](https://www.php.net)
+[![SDK: IPSModuleStrict](https://img.shields.io/badge/SDK-IPSModuleStrict-success.svg)](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/module/)
+[![Variablen: Darstellungen](https://img.shields.io/badge/Variablen-Darstellungen-success.svg)](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/darstellungen/)
+[![Kachel-Visualisierung: HTML-SDK](https://img.shields.io/badge/Kachel--Visualisierung-HTML--SDK-orange.svg)](https://www.symcon.de/de/service/dokumentation/entwicklerbereich/sdk-tools/sdk-php/html-sdk/)
+[![Farbschema: Symcon-Design, Dunkel, Hell](https://img.shields.io/badge/Farbschema-Symcon--Design_%7C_Dunkel_%7C_Hell-blueviolet.svg)](STYLEGUIDE.md)
+![Sprache: Deutsch](https://img.shields.io/badge/Sprache-Deutsch-blueviolet.svg)
+[![Lizenz: MIT](https://img.shields.io/badge/Lizenz-MIT-green.svg)](LICENSE)
+[![Cloud: Bring! Web-App (inoffiziell)](https://img.shields.io/badge/Cloud-Bring%21_Web--App_(inoffiziell)-lightgrey.svg)](https://www.getbring.com)
+
 Bindet Bring!-Einkaufslisten in IP-Symcon ein: Liste anzeigen, Artikel hinzufügen, abhaken und entfernen, Benachrichtigungen an alle Mitglieder senden – mit eigener Kachel für die Visualisierung.
 
 > **Hinweis:** Bring! bietet keine offizielle Schnittstelle. Das Modul nutzt die Schnittstelle der Bring!-Web-App, steht in keiner Verbindung zur Bring! Labs AG und ist nur für die private Nutzung gedacht. Ändert Bring! die Schnittstelle, kann das Modul ohne Vorwarnung aufhören zu funktionieren.
@@ -43,6 +56,10 @@ Bring Konfigurator  ─┘
 | Bring Übersicht | EINK | {354B6E1E-7D2A-476B-AEFC-1435851C1895} |
 
 ## Changelog
+
+**Version 1.1 (Build 13)**
+- Einheitliches Design nach `STYLEGUIDE.md`: Kachel-Grundlage (Farben, Schrift, Radien, Zustandsfarben) und Einstellung „Farbschema der Kachel“ (Symcon-Design, Dunkel, Hell); Kachel-Datei heißt `tile.html`; einheitliche Badges; gemeinsamer Test-Workflow mit Struktur- und Ladetest
+- LICENSE-Datei ergänzt; im Symcon-Design Akzentfarbe der Visualisierung, Bring-Rot bei „Dunkel“ und „Hell“; Artikel-Dialog folgt dem Farbschema
 
 **Version 1.0 (Build 12)**
 - Bring Konto gleicht alle 15 Minuten die Listen der Bring!-App mit Symcon ab: neue und in der App gelöschte Listen erscheinen im Meldungsfenster, in der Variable „Neue Listen in Bring!“ und als Hinweis in der Bring Übersicht

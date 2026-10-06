@@ -52,6 +52,25 @@
                     "caption": "Eigene Kachel verwenden"
                 },
                 {
+                    "type": "Select",
+                    "name": "TileTheme",
+                    "caption": "Farbschema der Kachel",
+                    "options": [
+                        {
+                            "caption": "Symcon-Design (Farben der Visualisierung)",
+                            "value": 0
+                        },
+                        {
+                            "caption": "Dunkel",
+                            "value": 1
+                        },
+                        {
+                            "caption": "Hell",
+                            "value": 2
+                        }
+                    ]
+                },
+                {
                     "type": "CheckBox",
                     "name": "ZuletztAnzeigen",
                     "caption": "\"Zuletzt verwendet\" in der Kachel anzeigen"

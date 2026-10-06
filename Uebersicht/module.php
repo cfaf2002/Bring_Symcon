@@ -16,6 +16,7 @@ class BringUebersicht extends IPSModuleStrict
     public function Create(): void
     {
         parent::Create();
+        $this->RegisterPropertyInteger('TileTheme', 0);         // 0 = Symcon-Design, 1 = Dunkel, 2 = Hell
         $this->RegisterAttributeString('Beobachtet', '[]');
         $this->RegisterAttributeString('LetzteHinweise', '');
         $this->RegisterTimer('Pruefen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "Pruefen", true);');
@@ -122,8 +123,8 @@ class BringUebersicht extends IPSModuleStrict
 
     public function GetVisualizationTile(): string
     {
-        $Liste = file_get_contents(__DIR__ . '/../Liste/module.html');
-        $Uebersicht = file_get_contents(__DIR__ . '/module.html');
+        $Liste = file_get_contents(__DIR__ . '/../Liste/tile.html');
+        $Uebersicht = file_get_contents(__DIR__ . '/tile.html');
         $Daten = json_encode($this->Daten(true), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
         return $Liste . $Uebersicht . '<script>handleMessage(' . json_encode($Daten, JSON_HEX_TAG) . ');</script>';
     }
@@ -202,7 +203,7 @@ class BringUebersicht extends IPSModuleStrict
 
     private function Daten(bool $MitKatalog): array
     {
-        $Daten = ['listen' => [], 'hinweise' => $this->Hinweise()];
+        $Daten = ['listen' => [], 'hinweise' => $this->Hinweise(), 'theme' => $this->ReadPropertyInteger('TileTheme')];
         $this->WriteAttributeString('LetzteHinweise', json_encode($Daten['hinweise']));
         foreach ($this->Listen() as $ID) {
             try {
