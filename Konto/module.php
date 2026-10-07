@@ -13,6 +13,10 @@ require_once __DIR__ . '/../libs/EINK.php';
  */
 class BringKonto extends IPSModuleStrict
 {
+    // Nach abgelehnter Anmeldung warten: 15 Minuten, dann doppelt so lange, höchstens 6 Stunden
+    private const LOGIN_WARTEN_START = 900;
+    private const LOGIN_WARTEN_MAX = 21600;
+
     public function Create(): void
     {
         parent::Create();
@@ -32,6 +36,8 @@ class BringKonto extends IPSModuleStrict
         $this->RegisterAttributeString('LoginHash', '');
         $this->RegisterAttributeString('BringListen', '');
         $this->RegisterAttributeString('Gemeldet', '[]');
+        $this->RegisterAttributeInteger('LoginFehler', 0);
+        $this->RegisterAttributeInteger('LoginSperreBis', 0);
 
         $this->RegisterTimer('TokenRefresh', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "TokenRefresh", true);');
         $this->RegisterTimer('ListenPruefen', 0, 'IPS_RequestAction($_IPS[\'TARGET\'], "ListenPruefen", true);');
@@ -54,6 +60,9 @@ class BringKonto extends IPSModuleStrict
         if (!$this->Pruefen()) {
             return;
         }
+
+        // „Übernehmen“ startet sofort einen neuen Anmeldeversuch
+        $this->LoginWartezeitBeenden();
 
         // Zugangsdaten geändert? Dann alte Tokens verwerfen.
         $Hash = md5($this->ReadPropertyString('EMail') . '|' . $this->ReadPropertyString('Passwort'));
@@ -118,8 +127,15 @@ class BringKonto extends IPSModuleStrict
         if (!$this->Pruefen()) {
             return false;
         }
-        $this->TokensLoeschen();
-        $Ok = $this->Anmelden();
+        if (!$this->Sperren()) {
+            return false;
+        }
+        try {
+            $this->TokensLoeschen();
+            $Ok = $this->Anmelden(true);
+        } finally {
+            $this->Freigeben();
+        }
         $this->ReloadForm();
         return $Ok;
     }
@@ -297,37 +313,71 @@ class BringKonto extends IPSModuleStrict
 
     /**
      * Stellt sicher, dass ein gültiger Token vorliegt.
+     * Gesperrt, damit nicht zwei Threads gleichzeitig erneuern und der zweite den frischen Token verwirft.
      */
     private function Verbinden(): bool
     {
-        if ($this->ReadAttributeString('AccessToken') !== '' && $this->ReadAttributeInteger('TokenAblauf') > time() + 600) {
-            $this->RefreshPlanen();
-            if ($this->GetStatus() != IS_ACTIVE) {
-                $this->SetStatus(IS_ACTIVE);
+        if (!$this->Sperren()) {
+            return false;
+        }
+        try {
+            if ($this->ReadAttributeString('AccessToken') !== '' && $this->ReadAttributeInteger('TokenAblauf') > time() + 600) {
+                $this->RefreshPlanen();
+                if ($this->GetStatus() != IS_ACTIVE) {
+                    $this->SetStatus(IS_ACTIVE);
+                }
+                return true;
             }
-            return true;
+            if ($this->ReadAttributeString('RefreshToken') !== '') {
+                $Erneuert = $this->TokenErneuern();
+                if ($Erneuert !== false) {
+                    return $Erneuert === true; // null = Bring! nicht erreichbar: nicht mit Passwort neu anmelden
+                }
+            }
+            return $this->Anmelden();
+        } finally {
+            $this->Freigeben();
         }
-        if ($this->ReadAttributeString('RefreshToken') !== '' && $this->TokenErneuern()) {
-            return true;
-        }
-        return $this->Anmelden();
     }
 
-    private function Anmelden(): bool
+    /**
+     * Anmeldung mit E-Mail und Passwort. Nach einer Ablehnung wird mit wachsender Wartezeit
+     * erneut versucht (Schutz vor Kontosperre); $Sofort (Button „Verbindung testen“) ignoriert sie.
+     */
+    private function Anmelden(bool $Sofort = false): bool
     {
-        $this->SendDebug('Anmelden', $this->ReadPropertyString('EMail'), 0);
+        $Sperre = $this->ReadAttributeInteger('LoginSperreBis');
+        if (!$Sofort && $Sperre > time()) {
+            $this->SendDebug('Anmelden', 'Wartezeit nach abgelehnter Anmeldung bis ' . date('H:i', $Sperre) . ' – kein Versuch', 0);
+            return false;
+        }
+        $this->SendDebug('Anmelden', 'mit den hinterlegten Zugangsdaten', 0);
         $Result = $this->Http('POST', EINK::API_URL . 'bringauth', [
             'email'    => $this->ReadPropertyString('EMail'),
             'password' => $this->ReadPropertyString('Passwort')
         ], 'form', false);
 
         if (!$Result['Success'] || !is_array($Result['Data']) || !isset($Result['Data']['access_token'])) {
+            if (!self::Abgelehnt($Result['Code'])) {
+                // Netz- oder Serverfehler: Tokens behalten, kein Anmeldefehler (der würde die Listen stilllegen) –
+                // beim nächsten Abruf erneut. Ein Hinweis-Status aus der Einrichtung wird dabei aufgehoben.
+                $this->SendDebug('Anmelden', 'Bring! nicht erreichbar (' . ($Result['Error'] !== '' ? $Result['Error'] : 'HTTP ' . $Result['Code']) . ')', 0);
+                if (!in_array($this->GetStatus(), [IS_ACTIVE, EINK::STATUS_LOGIN_FEHLER], true)) {
+                    $this->SetStatus(IS_ACTIVE);
+                }
+                return false;
+            }
             $this->TokensLoeschen();
+            $Fehler = $this->ReadAttributeInteger('LoginFehler') + 1;
+            $Warten = (int) min(self::LOGIN_WARTEN_MAX, self::LOGIN_WARTEN_START * 2 ** min(10, $Fehler - 1));
+            $this->WriteAttributeInteger('LoginFehler', $Fehler);
+            $this->WriteAttributeInteger('LoginSperreBis', time() + $Warten);
             $this->SetStatus(EINK::STATUS_LOGIN_FEHLER);
-            $this->LogMessage('Anmeldung bei Bring! fehlgeschlagen (HTTP ' . $Result['Code'] . ')', KL_ERROR);
+            $this->LogMessage('Anmeldung bei Bring! fehlgeschlagen (HTTP ' . $Result['Code'] . ') – nächster Versuch in ' . round($Warten / 60) . ' Minuten', KL_ERROR);
             return false;
         }
 
+        $this->LoginWartezeitBeenden();
         $D = $Result['Data'];
         $this->WriteAttributeString('Uuid', (string) ($D['uuid'] ?? ''));
         $this->WriteAttributeString('PublicUuid', (string) ($D['publicUuid'] ?? ''));
@@ -337,7 +387,10 @@ class BringKonto extends IPSModuleStrict
         return true;
     }
 
-    private function TokenErneuern(): bool
+    /**
+     * Rückgabe: true = erneuert, false = abgelehnt (neue Anmeldung nötig), null = Bring! nicht erreichbar
+     */
+    private function TokenErneuern(): ?bool
     {
         $this->SendDebug('TokenErneuern', '', 0);
         $Result = $this->Http('POST', EINK::API_URL . 'bringauth/token', [
@@ -346,11 +399,43 @@ class BringKonto extends IPSModuleStrict
         ], 'form', false);
 
         if (!$Result['Success'] || !is_array($Result['Data']) || !isset($Result['Data']['access_token'])) {
+            if (!self::Abgelehnt($Result['Code'])) {
+                $this->SendDebug('TokenErneuern', 'Bring! nicht erreichbar, später erneut', 0);
+                return null;
+            }
             $this->SendDebug('TokenErneuern', 'fehlgeschlagen, neue Anmeldung nötig', 0);
             return false;
         }
         $this->TokensSpeichern($Result['Data']);
         return true;
+    }
+
+    /** Nur 400/401/403 am Anmelde-Endpunkt bedeuten „abgelehnt“; alles andere ist eine Netz- oder Serverstörung. */
+    private static function Abgelehnt(int $Code): bool
+    {
+        return in_array($Code, [400, 401, 403], true);
+    }
+
+    private function LoginWartezeitBeenden(): void
+    {
+        if ($this->ReadAttributeInteger('LoginFehler') !== 0 || $this->ReadAttributeInteger('LoginSperreBis') !== 0) {
+            $this->WriteAttributeInteger('LoginFehler', 0);
+            $this->WriteAttributeInteger('LoginSperreBis', 0);
+        }
+    }
+
+    private function Sperren(): bool
+    {
+        if (IPS_SemaphoreEnter('EINK_Token_' . $this->InstanceID, 30000)) {
+            return true;
+        }
+        $this->SendDebug('Anmelden', 'Token-Erneuerung läuft noch in einem anderen Ablauf', 0);
+        return false;
+    }
+
+    private function Freigeben(): void
+    {
+        IPS_SemaphoreLeave('EINK_Token_' . $this->InstanceID);
     }
 
     private function TokensSpeichern(array $D): void
@@ -399,11 +484,24 @@ class BringKonto extends IPSModuleStrict
         $Url = $Extern ? $Endpoint : EINK::API_URL . $this->Platzhalter($Endpoint);
         $Body = $this->PlatzhalterArray($Body);
 
+        $Benutzt = $this->ReadAttributeString('AccessToken');
         $Result = $this->Http($Method, $Url, $Body, $Type, !$Extern);
         if (!$Extern && $Result['Code'] == 401) {
             $this->SendDebug('Anfrage', '401 – melde neu an', 0);
-            $this->TokensLoeschen();
-            if ($this->Anmelden()) {
+            $Neu = false;
+            if ($this->Sperren()) {
+                try {
+                    if ($this->ReadAttributeString('AccessToken') !== $Benutzt) {
+                        $Neu = $this->ReadAttributeString('AccessToken') !== ''; // inzwischen von einem anderen Ablauf erneuert
+                    } else {
+                        $this->TokensLoeschen();
+                        $Neu = $this->Anmelden();
+                    }
+                } finally {
+                    $this->Freigeben();
+                }
+            }
+            if ($Neu) {
                 $Result = $this->Http($Method, $Url, $Body, $Type, true);
             }
         }

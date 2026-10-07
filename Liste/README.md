@@ -51,6 +51,8 @@ EINK_AddItem(12345, 'Milch', '2 Liter');
 EINK_CompleteItem(12345, 'Milch');
 ```
 
+`EINK_GetTileData` und `EINK_TileAction` sind nur für die Bring Übersicht da und nicht für eigene Skripte gedacht.
+
 ## Status
 
 | Code | Bedeutung |

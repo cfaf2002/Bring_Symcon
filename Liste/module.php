@@ -151,7 +151,7 @@ class BringListe extends IPSModuleStrict
                 break;
             case 'Katalog':
                 if ($this->HasActiveParent() && $this->KatalogPruefen()) {
-                    $this->VariablenSetzen($this->ArtikelHolen());
+                    $this->VariablenSetzen($this->ArtikelHolen(), false);
                     $this->KachelSenden(true);
                 }
                 break;
@@ -171,8 +171,12 @@ class BringListe extends IPSModuleStrict
             $Result = EINK::Response(@$this->SendDataToParent(EINK::Request('GET', 'bringusers/{uuid}/lists')));
             if ($Result['Success'] && is_array($Result['Data'])) {
                 foreach ($Result['Data']['lists'] ?? [] as $Liste) {
-                    $Optionen[] = ['caption' => (string) $Liste['name'], 'value' => (string) $Liste['listUuid']];
-                    $Gefunden = $Gefunden || ($Liste['listUuid'] === $Aktuell);
+                    $Uuid = (string) ($Liste['listUuid'] ?? '');
+                    if ($Uuid === '') {
+                        continue;
+                    }
+                    $Optionen[] = ['caption' => (string) ($Liste['name'] ?? $Uuid), 'value' => $Uuid];
+                    $Gefunden = $Gefunden || ($Uuid === $Aktuell);
                 }
             }
         }
@@ -430,15 +434,18 @@ class BringListe extends IPSModuleStrict
         return true;
     }
 
-    private function EingabeHinzufuegen(string $Text): void
+    /** Liefert false, wenn mindestens ein Artikel nicht gespeichert werden konnte. */
+    private function EingabeHinzufuegen(string $Text): bool
     {
+        $Ok = true;
         foreach (preg_split('/[\r\n;]+/', $Text) as $Zeile) {
             $Teile = explode(',', $Zeile, 2);
             $Name = trim($Teile[0]);
             if ($Name !== '') {
-                $this->AddItem($Name, trim($Teile[1] ?? ''));
+                $Ok = $this->AddItem($Name, trim($Teile[1] ?? '')) && $Ok;
             }
         }
+        return $Ok;
     }
 
     private function KachelAktion(string $JSON): string
@@ -448,21 +455,22 @@ class BringListe extends IPSModuleStrict
             return '';
         }
         $Key = (string) ($A['key'] ?? '');
+        $Ok = true; // false: Änderung nicht gespeichert, die Kachel zeigt sie aber schon an
         switch ($A['aktion'] ?? '') {
             case 'hinzufuegen':
-                $this->EingabeHinzufuegen((string) ($A['text'] ?? ''));
+                $Ok = $this->EingabeHinzufuegen((string) ($A['text'] ?? ''));
                 break;
             case 'abhaken':
-                $this->Aendern(['purchase' => '', 'recently' => $Key, 'specification' => $this->Beschreibung($Key), 'remove' => '']);
+                $Ok = $this->Aendern(['purchase' => '', 'recently' => $Key, 'specification' => $this->Beschreibung($Key), 'remove' => '']);
                 break;
             case 'wieder':
-                $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => $this->Beschreibung($Key), 'remove' => '']);
+                $Ok = $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => $this->Beschreibung($Key), 'remove' => '']);
                 break;
             case 'beschreibung':
-                $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => trim((string) ($A['spec'] ?? '')), 'remove' => '']);
+                $Ok = $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => trim((string) ($A['spec'] ?? '')), 'remove' => '']);
                 break;
             case 'entfernen':
-                $this->Aendern(['purchase' => '', 'recently' => '', 'specification' => '', 'remove' => $Key]);
+                $Ok = $this->Aendern(['purchase' => '', 'recently' => '', 'specification' => '', 'remove' => $Key]);
                 break;
             case 'benachrichtigen':
                 $Texte = [
@@ -478,12 +486,17 @@ class BringListe extends IPSModuleStrict
             case 'artikel':
                 $Key = (string) ($A['key'] ?? '');
                 if ($Key !== '') {
-                    $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => trim((string) ($A['spec'] ?? '')), 'remove' => '']);
+                    $Ok = $this->Aendern(['purchase' => $Key, 'recently' => '', 'specification' => trim((string) ($A['spec'] ?? '')), 'remove' => '']);
                 }
                 break;
             case 'aktualisieren':
                 $this->Update();
                 break;
+        }
+        if (!$Ok) {
+            // Kachel hat die Änderung schon angezeigt: echten Stand zurückschicken
+            $this->KachelSenden();
+            return 'Änderung konnte nicht gespeichert werden – bitte später erneut versuchen.';
         }
         return '';
     }
@@ -698,7 +711,8 @@ class BringListe extends IPSModuleStrict
         ];
     }
 
-    private function VariablenSetzen(array $Artikel): void
+    /** $Abgerufen = false: nur neu dargestellt (z. B. neuer Katalog), „Letzte Aktualisierung“ bleibt. */
+    private function VariablenSetzen(array $Artikel, bool $Abgerufen = true): void
     {
         $Zeilen = [];
         foreach ($Artikel['purchase'] as $A) {
@@ -711,7 +725,9 @@ class BringListe extends IPSModuleStrict
         if ($this->GetValue('Anzahl') !== count($Zeilen)) {
             $this->SetValue('Anzahl', count($Zeilen));
         }
-        $this->SetValue('Zeitpunkt', time());
+        if ($Abgerufen) {
+            $this->SetValue('Zeitpunkt', time());
+        }
     }
 
     // ---------- Kachel ----------
@@ -811,7 +827,7 @@ class BringListe extends IPSModuleStrict
             return false;
         }
         if ($Ergebnis) {
-            $this->VariablenSetzen($this->ArtikelHolen());
+            $this->VariablenSetzen($this->ArtikelHolen(), false);
             $this->KachelSenden(true);
         }
         return true;

@@ -13,6 +13,8 @@ Meldet sich am Bring!-Konto an und leitet alle Anfragen der Listen und des Konfi
 
 Button **Verbindung testen** meldet sich neu an und zeigt das Ergebnis.
 
+Lehnt Bring! die Anmeldung ab (falsches Passwort), versucht die Instanz es erst nach 15 Minuten erneut, danach mit jeweils doppelter Wartezeit bis höchstens 6 Stunden – so wird das Konto nicht gesperrt. **Übernehmen** oder **Verbindung testen** starten sofort einen neuen Versuch. Ist Bring! nur kurz nicht erreichbar, bleiben die Tokens erhalten und die Instanz verbunden.
+
 ## Listenabgleich
 
 Alle 15 Minuten (und beim Start) vergleicht das Konto die Listen in der Bring!-App mit den Bring Listen in Symcon:
@@ -45,3 +47,5 @@ array EINK_CheckLists(int $InstanzID);
 array EINK_GetLists(int $InstanzID);
 print_r(EINK_GetLists(12345));
 ```
+
+`EINK_GetListHints` ist nur für die Bring Übersicht da und nicht für eigene Skripte gedacht.
